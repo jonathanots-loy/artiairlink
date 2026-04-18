@@ -251,6 +251,25 @@ textarea{min-height:80px;resize:vertical}
 .banner.warn{background:#fdf3e0;color:#7a4f0a;border:1px solid #f0d098}
 .banner.ok{background:#e8f4e6;color:#1a5a22;border:1px solid #a8d8a0}
 .bico{font-size:15px;flex-shrink:0;margin-top:2px}
+
+/* MULTI-INDEX SELECTOR */
+.idx-selector{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.idx-pill{padding:6px 11px;border-radius:999px;font-size:11px;font-weight:800;
+  background:#fff;border:1px solid var(--line2);color:var(--muted);cursor:pointer;
+  transition:all .15s;flex:1;min-width:36px;text-align:center;letter-spacing:.04em}
+.idx-pill.active{background:var(--G1);color:#fff;border-color:var(--G1);box-shadow:0 2px 8px rgba(35,77,50,.25)}
+.idx-pill:active{transform:scale(.96)}
+/* INDEX BARS */
+.idx-bars{display:grid;gap:8px}
+.idx-bar-row{display:flex;align-items:center;gap:8px;transition:opacity .2s}
+.idx-bar-row:not(.ibr-active){opacity:.5}
+.ibr-label{font-size:10px;font-weight:800;color:var(--muted);width:32px;flex-shrink:0;letter-spacing:.06em}
+.ibr-active .ibr-label{color:var(--G1)}
+.ibr-track{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.ibr-fill{height:100%;border-radius:3px;background:var(--G3);transition:width .35s ease,background .35s}
+.ibr-fill.idx-warn{background:var(--amber2)}
+.ibr-fill.idx-bad{background:var(--red2)}
+.ibr-val{font-size:11px;font-weight:800;color:var(--ink);width:46px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -438,6 +457,28 @@ textarea{min-height:80px;resize:vertical}
     </div>
   </div>
 
+  <!-- MULTI-INDEX PANEL -->
+  <div class="card" style="padding:14px;margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="section-title" style="margin:0;font-size:13px">Indices végétaux RGB</div>
+      <span style="font-size:10px;color:var(--G3);font-weight:800;letter-spacing:.06em" id="activeIdxLabel">VARI</span>
+    </div>
+    <div class="idx-selector">
+      <button class="idx-pill active" data-idx="VARI"  onclick="selectIndex('VARI')">VARI</button>
+      <button class="idx-pill"        data-idx="ExG"   onclick="selectIndex('ExG')">ExG</button>
+      <button class="idx-pill"        data-idx="GRVI"  onclick="selectIndex('GRVI')">GRVI</button>
+      <button class="idx-pill"        data-idx="GLI"   onclick="selectIndex('GLI')">GLI</button>
+      <button class="idx-pill"        data-idx="TGI"   onclick="selectIndex('TGI')">TGI</button>
+    </div>
+    <div class="idx-bars">
+      <div class="idx-bar-row ibr-active" id="ibar_VARI"><span class="ibr-label">VARI</span><div class="ibr-track"><div class="ibr-fill" id="ifill_VARI" style="width:0%"></div></div><span class="ibr-val" id="ival_VARI">—</span></div>
+      <div class="idx-bar-row"            id="ibar_ExG"> <span class="ibr-label">ExG</span> <div class="ibr-track"><div class="ibr-fill" id="ifill_ExG"  style="width:0%"></div></div><span class="ibr-val" id="ival_ExG">—</span></div>
+      <div class="idx-bar-row"            id="ibar_GRVI"><span class="ibr-label">GRVI</span><div class="ibr-track"><div class="ibr-fill" id="ifill_GRVI" style="width:0%"></div></div><span class="ibr-val" id="ival_GRVI">—</span></div>
+      <div class="idx-bar-row"            id="ibar_GLI"> <span class="ibr-label">GLI</span> <div class="ibr-track"><div class="ibr-fill" id="ifill_GLI"  style="width:0%"></div></div><span class="ibr-val" id="ival_GLI">—</span></div>
+      <div class="idx-bar-row"            id="ibar_TGI"> <span class="ibr-label">TGI</span> <div class="ibr-track"><div class="ibr-fill" id="ifill_TGI"  style="width:0%"></div></div><span class="ibr-val" id="ival_TGI">—</span></div>
+    </div>
+  </div>
+
   <div class="health-block" id="healthBlock">
     <div class="hb-state" id="hbState">—</div>
     <div class="hb-reco" id="hbReco">Activez une source pour démarrer l'analyse.</div>
@@ -601,6 +642,7 @@ const S = {
   cameras: [], selectedDeviceId: null,
   localStream: null,
   loopRunning: false,
+  selectedIndex: 'VARI',
   mapParams: { altitude: 30, overlap: 75, speed: 4, missionType: 'Lawnmower' },
 };
 let toastTimer = null, deferredPrompt = null;
@@ -799,6 +841,53 @@ const CROPS = {
 
 function cropFromKey(key) { return CROPS[key] || CROPS.autre; }
 
+// ─── Définitions des 5 indices RGB sans capteur NIR ──────────────────────
+const INDEX_DEF = {
+  VARI: { label:'VARI', full:'VARI · Gitelson 2002',             thresholds:{ excellent:0.18, good:0.08, stress:0.01, severe:-0.05 } },
+  ExG:  { label:'ExG',  full:'Excess Green · Woebbecke 1995',    thresholds:{ excellent:0.18, good:0.09, stress:0.02, severe:-0.03 } },
+  GRVI: { label:'GRVI', full:'Green-Red VI · Tucker 1979',       thresholds:{ excellent:0.16, good:0.07, stress:0.01, severe:-0.05 } },
+  GLI:  { label:'GLI',  full:'Green Leaf Index · Louhaichi 2001',thresholds:{ excellent:0.16, good:0.07, stress:0.01, severe:-0.05 } },
+  TGI:  { label:'TGI',  full:'Triangular Greenness · Hunt 2011', thresholds:{ excellent:0.12, good:0.05, stress:0.01, severe:-0.03 } },
+};
+
+// Indice optimal par culture (basé sur réponse spectrale foliaire)
+const CROP_BEST_INDEX = {
+  mais:'GRVI', manioc:'GLI', ble:'TGI', riz:'VARI',
+  soja:'GRVI', cafe:'TGI',  coton:'VARI', tomate:'VARI',
+  banane:'GLI', agrumes:'GRVI', autre:'VARI',
+};
+
+function selectIndex(idx) {
+  S.selectedIndex = idx;
+  document.querySelectorAll('.idx-pill').forEach(p =>
+    p.classList.toggle('active', p.dataset.idx === idx)
+  );
+  ['VARI','ExG','GRVI','GLI','TGI'].forEach(id => {
+    const bar = document.getElementById('ibar_' + id);
+    if (bar) bar.classList.toggle('ibr-active', id === idx);
+  });
+  const lbl = document.getElementById('activeIdxLabel');
+  if (lbl) lbl.textContent = INDEX_DEF[idx]?.label || idx;
+}
+
+function updateIndexBars(m) {
+  const all = m.allIndices;
+  if (!all) return;
+  ['VARI','ExG','GRVI','GLI','TGI'].forEach(idx => {
+    const val = all[idx];
+    if (val === undefined) return;
+    // Mappe [-0.6, +0.6] → [2%, 98%] pour la barre
+    const pct   = Math.max(2, Math.min(98, Math.round((val + 0.6) / 1.2 * 100)));
+    const fill  = document.getElementById('ifill_' + idx);
+    const valEl = document.getElementById('ival_'  + idx);
+    if (fill) {
+      fill.style.width = pct + '%';
+      fill.className   = 'ibr-fill' + (val >= 0.08 ? '' : val >= 0.01 ? ' idx-warn' : ' idx-bad');
+    }
+    if (valEl) valEl.textContent = val.toFixed(3);
+  });
+}
+
 function colorLabel(r, g, b) {
   const lum = 0.299*r + 0.587*g + 0.114*b;
   const max  = Math.max(r, g, b), min = Math.min(r, g, b);
@@ -835,16 +924,24 @@ function computeMetrics(r, g, b, cropKey) {
   const hsl  = rgbToHsl(r, g, b);
   const hue  = hsl.h, sat = hsl.s;
 
-  // VARI — Visible Atmospherically Resistant Index (meilleur que NGRDI sur caméra RGB)
-  // Source : Gitelson et al. (2002), Remote Sensing of Environment
+  // ── Calcul des 5 indices RGB normalisés dans [-1, +1] ───────────────────
   const dv   = g + r - b;
   const vari = Math.abs(dv) < 4 ? 0 : Math.max(-1, Math.min(1, (g - r) / dv));
+  const sum  = r + g + b || 1;
+  const exg  = Math.max(-1, Math.min(1, (2*g - r - b) / sum));
+  const grvi = (g + r) < 4 ? 0 : Math.max(-1, Math.min(1, (g - r) / (g + r)));
+  const gli  = (2*g + r + b) < 4 ? 0 : Math.max(-1, Math.min(1, (2*g - r - b) / (2*g + r + b)));
+  const tgi  = Math.max(-1, Math.min(1, (g - 0.39*r - 0.61*b) / 255));
 
-  // Détecter si la caméra voit un fruit coloré (pour cultures fruit/mixed)
+  const allIndices = {
+    VARI: +vari.toFixed(4), ExG: +exg.toFixed(4),
+    GRVI: +grvi.toFixed(4), GLI: +gli.toFixed(4), TGI: +tgi.toFixed(4),
+  };
+
+  // ── Détection mode fruit (cultures tomate, banane, agrumes) ─────────────
   let analysisMode = 'plant';
   if (crop.type === 'fruit' || crop.type === 'mixed') {
     const fh = crop.fruitHueRange;
-    // Hue dans la plage fruit ET saturation suffisante
     const inFruit = ((hue >= fh[0] && hue <= fh[1]) || (fh[0] <= 5 && hue > 340)) && sat > 0.38;
     if (inFruit) analysisMode = 'fruit';
   }
@@ -852,44 +949,49 @@ function computeMetrics(r, g, b, cropKey) {
   let hl, hs, stress, rec, sev, indexUsed, indexVal, indexSub;
 
   if (analysisMode === 'fruit') {
-    // ── Analyse par teinte du fruit ─────────────────────────────────────
+    // ── Analyse par teinte du fruit ──────────────────────────────────────
     indexUsed = 'Hue (teinte)';
     const fh = crop.fruitHueRange;
     const mid = (fh[0] + fh[1]) / 2;
     const span = (fh[1] - fh[0]) / 2 + 15;
     let hueDist = Math.abs(hue - mid);
-    if (fh[0] <= 5) hueDist = Math.min(hueDist, Math.abs(hue - 360 - mid)); // wrap rouge
+    if (fh[0] <= 5) hueDist = Math.min(hueDist, Math.abs(hue - 360 - mid));
     const hueFit = Math.max(0, 1 - hueDist / span);
     indexVal = +(hue.toFixed(1));
     indexSub = 'Teinte fruit ' + crop.emoji;
 
-    if (hueFit > 0.72 && sat > 0.48) { hl='Fruit mûr sain';       hs=88; stress='Faible';           sev='good'; rec=crop.rec.excellent; }
+    if (hueFit > 0.72 && sat > 0.48) { hl='Fruit mûr sain';      hs=88; stress='Faible';           sev='good'; rec=crop.rec.excellent; }
     else if (hueFit > 0.42 && sat > 0.32) { hl='Maturation normale'; hs=70; stress='Faible à modéré'; sev='good'; rec=crop.rec.good; }
-    else if (sat > 0.22) { hl='Fruit imparfait';           hs=46; stress='Modéré';            sev='warn'; rec=crop.rec.stress; }
-    else                 { hl='Anomalie colorimétrique';  hs=26; stress='Élevé';             sev='bad';  rec=crop.rec.severe; }
+    else if (sat > 0.22)             { hl='Fruit imparfait';      hs=46; stress='Modéré';           sev='warn'; rec=crop.rec.stress; }
+    else                             { hl='Anomalie colorimétrique'; hs=26; stress='Élevé';         sev='bad';  rec=crop.rec.severe; }
   } else {
-    // ── Analyse végétale par VARI ────────────────────────────────────────
-    indexUsed = 'VARI';
-    const t = crop.thresholds;
-    indexVal = +vari.toFixed(4);
-    indexSub = 'VARI — ' + crop.emoji + ' ' + crop.name;
+    // ── Analyse végétale — indice sélectionné ────────────────────────────
+    const activeIdx = (S.selectedIndex in allIndices) ? S.selectedIndex : 'VARI';
+    const idxDef    = INDEX_DEF[activeIdx] || INDEX_DEF.VARI;
+    // Seuils culture-spécifiques si VARI, seuils génériques sinon
+    const t = activeIdx === 'VARI' ? crop.thresholds : idxDef.thresholds;
 
-    if (vari > t.excellent)   { hl='Excellent';    hs=90; stress='Faible';           sev='good'; rec=crop.rec.excellent; }
-    else if (vari > t.good)   { hl='Correct';      hs=72; stress='Faible à modéré'; sev='good'; rec=crop.rec.good; }
-    else if (vari > t.stress) { hl='Stress léger'; hs=54; stress='Modéré';          sev='warn'; rec=crop.rec.stress; }
-    else if (vari > t.severe) { hl='Stress fort';  hs=34; stress='Élevé';           sev='bad';  rec=crop.rec.severe; }
-    else                      { hl='Critique';     hs=16; stress='Très élevé';      sev='bad';  rec=crop.rec.critical; }
+    indexUsed = idxDef.label;
+    indexVal  = allIndices[activeIdx];
+    indexSub  = idxDef.full + ' · ' + crop.emoji + ' ' + crop.name;
+
+    if (indexVal > t.excellent)   { hl='Excellent';    hs=90; stress='Faible';           sev='good'; rec=crop.rec.excellent; }
+    else if (indexVal > t.good)   { hl='Correct';      hs=72; stress='Faible à modéré'; sev='good'; rec=crop.rec.good; }
+    else if (indexVal > t.stress) { hl='Stress léger'; hs=54; stress='Modéré';          sev='warn'; rec=crop.rec.stress; }
+    else if (indexVal > t.severe) { hl='Stress fort';  hs=34; stress='Élevé';           sev='bad';  rec=crop.rec.severe; }
+    else                          { hl='Critique';     hs=16; stress='Très élevé';      sev='bad';  rec=crop.rec.critical; }
   }
 
   return {
     ndvi: indexVal,
     vari: +vari.toFixed(4),
+    allIndices,
     lumi, confidence: conf,
     healthLabel: hl, healthScore: hs,
     stress, recommendation: rec, severity: sev,
     colorName: colorLabel(r, g, b), hex: toHex(r, g, b),
     cropName: crop.name, cropEmoji: crop.emoji,
-    indexUsed, indexSub, analysisMode
+    indexUsed, indexSub, analysisMode,
   };
 }
 
@@ -1048,6 +1150,7 @@ function updateAnalysisUI(m) {
   document.getElementById('mHealthLbl').textContent = m.healthLabel;
   document.getElementById('mLumi').textContent   = m.lumi;
   document.getElementById('mCardColor').className = 'metric ' + m.severity;
+  updateIndexBars(m);
   document.getElementById('hpSrc').textContent    = S.source.name;
   document.getElementById('hpMission').textContent = S.activeMission?.title?.slice(0,16) || 'Sans mission';
   document.getElementById('hpCrop').textContent   = S.activeMission ? (m.cropEmoji + ' ' + m.cropName) : '—';
@@ -1107,6 +1210,8 @@ async function captureReading() {
     stress: m.stress, confidence: m.confidence,
     recommendation: m.recommendation,
     lumi: m.lumi, severity: m.severity,
+    allIndices: m.allIndices,
+    selectedIndex: S.selectedIndex,
     captureIndex: S.session.captures.length,
     altitude: S.mapParams.altitude, overlap: S.mapParams.overlap,
     speed: S.mapParams.speed, missionType: S.mapParams.missionType,
@@ -1241,7 +1346,16 @@ async function refreshMissionList() {
 async function setActiveMission(id) {
   let missions = []; try { missions = await DB.getAll('missions'); } catch {}
   const m = missions.find(x => x.id === id);
-  if (m) { S.activeMission = m; LS.set('activeMissionId', m.id); refreshMissionList(); updateHomeMissionBanner(); toast('Mission "' + m.title + '" active ✓'); go('analyze'); }
+  if (m) {
+    S.activeMission = m;
+    LS.set('activeMissionId', m.id);
+    // Auto-sélection de l'indice optimal pour la culture
+    selectIndex(CROP_BEST_INDEX[m.cropKey] || 'VARI');
+    refreshMissionList();
+    updateHomeMissionBanner();
+    toast('Mission "' + m.title + '" active ✓');
+    go('analyze');
+  }
 }
 
 function updateHomeMissionBanner() {
@@ -1326,6 +1440,17 @@ function buildReportText() {
     '── Analyse végétale ──',
     'Couleur      : ' + m.colorName,
     'HEX          : ' + m.hex,
+    'Indice actif : ' + (m.indexUsed || 'VARI'),
+    'Valeur       : ' + (typeof m.ndvi === 'number' ? m.ndvi.toFixed(4) : (m.ndvi || '—')),
+    '',
+    '── Indices RGB comparatifs ──',
+    'VARI : ' + (m.allIndices?.VARI?.toFixed(4) ?? '—') + '  (Visible Atmospherically Resistant)',
+    'ExG  : ' + (m.allIndices?.ExG?.toFixed(4)  ?? '—') + '  (Excess Green)',
+    'GRVI : ' + (m.allIndices?.GRVI?.toFixed(4) ?? '—') + '  (Green-Red Vegetation Index)',
+    'GLI  : ' + (m.allIndices?.GLI?.toFixed(4)  ?? '—') + '  (Green Leaf Index)',
+    'TGI  : ' + (m.allIndices?.TGI?.toFixed(4)  ?? '—') + '  (Triangular Greenness Index)',
+    '',
+    '── Santé végétale ──',
     'NDVI         : ' + (m.ndvi?.toFixed(4) || '—'),
     'Santé        : ' + m.healthScore + '% (' + m.healthLabel + ')',
     'Stress       : ' + m.stress,
@@ -1371,12 +1496,15 @@ async function exportCSV() {
   let caps = []; try { caps = await DB.getAll('captures'); } catch {}
   caps.sort((a, b) => new Date(b.ts) - new Date(a.ts));
   if (!caps.length) { toast('Aucune capture à exporter', true); return; }
-  const header = 'Heure,Mission,Site,Culture,Couleur,Hex,NDVI,Santé%,État,Stress,Confiance%,Luminosité,Altitude,Recommandation';
+  const header = 'Heure,Mission,Site,Culture,Couleur,Hex,Indice,Valeur,VARI,ExG,GRVI,GLI,TGI,Santé%,État,Stress,Confiance%,Luminosité,Altitude,Recommandation';
   const rows = caps.map(c => [
     new Date(c.ts).toLocaleString('fr-BE'),
     c.missionTitle || '', c.site || '', c.crop || '',
     '"' + c.colorName + '"', c.hex,
-    c.ndvi, c.healthScore, c.healthLabel, c.stress, c.confidence, c.lumi, c.altitude,
+    c.selectedIndex || 'VARI', c.ndvi,
+    c.allIndices?.VARI ?? '', c.allIndices?.ExG ?? '',
+    c.allIndices?.GRVI ?? '', c.allIndices?.GLI ?? '', c.allIndices?.TGI ?? '',
+    c.healthScore, c.healthLabel, c.stress, c.confidence, c.lumi, c.altitude,
     '"' + c.recommendation + '"'
   ].join(','));
   const blob = new Blob([header + '\n' + rows.join('\n')], { type: 'text/csv;charset=utf-8' });

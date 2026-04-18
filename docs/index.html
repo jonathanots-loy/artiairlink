@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AgroVision — Documentation & Rapports</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+:root {
+  --G1:#1a3d20; --G2:#2e7a36; --G3:#4e8d65; --G4:#8cbf6c;
+  --bg:#f5f2eb; --card:#fffdf8; --line:#ddd8cc;
+  --ink:#1a281c; --muted:#667565;
+  --amber:#d1a05a; --red:#ba5a4e;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.7;
+  min-height:100vh;
+}
+
+/* ── HEADER ── */
+.header{
+  background:linear-gradient(135deg,var(--G1),var(--G2));
+  color:#fff;padding:28px 32px 24px;
+  border-bottom:3px solid var(--G4);
+}
+.header-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.hmark{width:52px;height:52px;border-radius:14px;
+  background:rgba(255,255,255,.15);display:grid;place-items:center;font-size:26px;flex-shrink:0}
+.htitle{font-size:26px;font-weight:900;letter-spacing:-.03em}
+.hsub{font-size:13px;opacity:.7;margin-top:2px;letter-spacing:.04em}
+
+/* ── TABS ── */
+.tabs-wrap{background:var(--G1);border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:0;z-index:50}
+.tabs{max-width:960px;margin:0 auto;display:flex;gap:0;overflow-x:auto}
+.tab{
+  padding:13px 22px;font-size:13px;font-weight:700;color:rgba(255,255,255,.6);
+  cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;
+  transition:all .18s;letter-spacing:.02em;
+}
+.tab:hover{color:rgba(255,255,255,.9)}
+.tab.active{color:#fff;border-bottom-color:var(--G4)}
+
+/* ── MAIN ── */
+.main{max-width:960px;margin:0 auto;padding:32px 24px 80px}
+
+/* ── PANELS ── */
+.panel{display:none}
+.panel.active{display:block}
+
+/* ── INDEX PANEL ── */
+.doc-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));margin-top:8px}
+.doc-card{
+  background:var(--card);border:1px solid var(--line);border-radius:18px;
+  padding:20px;cursor:pointer;transition:all .18s;
+  border-left:4px solid var(--G3);
+}
+.doc-card:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(35,77,50,.12);border-left-color:var(--G1)}
+.dc-icon{font-size:28px;margin-bottom:10px}
+.dc-title{font-size:16px;font-weight:800;color:var(--G1);margin-bottom:6px}
+.dc-desc{font-size:12px;color:var(--muted);line-height:1.6}
+.dc-meta{font-size:11px;color:var(--G3);font-weight:700;margin-top:10px}
+
+/* ── MARKDOWN CONTENT ── */
+.md-content{
+  background:var(--card);border:1px solid var(--line);border-radius:20px;
+  padding:36px 40px;max-width:100%;
+}
+@media(max-width:600px){.md-content{padding:20px 18px}}
+
+.md-content h1{font-size:28px;font-weight:900;color:var(--G1);margin:0 0 6px;letter-spacing:-.03em;border:none;padding:0}
+.md-content h2{font-size:20px;font-weight:800;color:var(--G1);margin:36px 0 14px;padding-bottom:8px;border-bottom:2px solid var(--line)}
+.md-content h3{font-size:16px;font-weight:800;color:var(--G2);margin:24px 0 10px}
+.md-content h4{font-size:14px;font-weight:800;color:var(--G3);margin:18px 0 8px;text-transform:uppercase;letter-spacing:.06em}
+.md-content p{margin:0 0 14px;font-size:15px}
+.md-content ul,
+.md-content ol{margin:0 0 14px;padding-left:22px}
+.md-content li{margin-bottom:5px;font-size:15px}
+.md-content strong{color:var(--G1);font-weight:800}
+.md-content em{color:var(--muted)}
+.md-content hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+.md-content blockquote{
+  border-left:3px solid var(--G4);background:#f0f6ea;
+  padding:12px 16px;border-radius:0 10px 10px 0;margin:0 0 14px;
+  font-style:italic;color:var(--muted);font-size:14px;
+}
+
+/* Tables */
+.md-content table{width:100%;border-collapse:collapse;margin:0 0 20px;font-size:13px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.md-content thead{background:var(--G1);color:#fff}
+.md-content th{padding:10px 12px;text-align:left;font-weight:700;letter-spacing:.04em;font-size:11px;text-transform:uppercase}
+.md-content td{padding:9px 12px;border-bottom:1px solid var(--line)}
+.md-content tr:last-child td{border-bottom:none}
+.md-content tr:nth-child(even){background:#faf8f2}
+.md-content tr:hover{background:#f0f6ea}
+
+/* Code blocks */
+.md-content pre{
+  background:#0e1e14;color:#c8e6c9;border-radius:14px;
+  padding:18px 20px;overflow-x:auto;margin:0 0 18px;
+  font-size:13px;line-height:1.7;border:1px solid rgba(255,255,255,.06);
+}
+.md-content code{
+  font-family:'Cascadia Code','Fira Code',monospace;
+}
+.md-content :not(pre)>code{
+  background:#eaf2e8;color:var(--G1);padding:2px 7px;
+  border-radius:5px;font-size:13px;
+}
+
+/* Checkboxes */
+.md-content input[type=checkbox]{accent-color:var(--G2);margin-right:6px}
+
+/* ── BREADCRUMB ── */
+.breadcrumb{font-size:12px;color:var(--muted);margin-bottom:14px;font-weight:600}
+.breadcrumb span{color:var(--G2);cursor:pointer}
+.breadcrumb span:hover{text-decoration:underline}
+
+/* ── BACK BTN ── */
+.back-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 14px;border-radius:10px;background:#fff;border:1px solid var(--line);
+  font-size:12px;font-weight:700;color:var(--G1);cursor:pointer;
+  margin-bottom:16px;transition:all .15s;
+}
+.back-btn:hover{background:#edf6ea;border-color:var(--G3)}
+
+/* ── FOOTER ── */
+.footer{text-align:center;padding:24px;font-size:11px;color:var(--muted);letter-spacing:.06em}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="hmark">🌿</div>
+    <div>
+      <div class="htitle">AgroVision — Documentation</div>
+      <div class="hsub">ArtiAirLink · Section Drone & Innovation · Belgique & RDC</div>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs-wrap">
+  <div class="tabs">
+    <div class="tab active" onclick="showPanel('index')">📁 Tous les documents</div>
+    <div class="tab" onclick="loadDoc('study')">📘 Étude Scientifique</div>
+    <div class="tab" onclick="loadDoc('research')">🔍 Rapport de Recherche</div>
+    <div class="tab" onclick="loadDoc('changelog')">🛠️ Changelog Technique</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- INDEX PANEL -->
+  <div class="panel active" id="panel-index">
+    <h2 style="font-size:22px;font-weight:900;color:var(--G1);margin-bottom:6px">Bibliothèque de documents</h2>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:20px">Session du 18 Avril 2026 · AgroVision Phase 2</p>
+
+    <div class="doc-grid">
+      <div class="doc-card" onclick="loadDoc('study')">
+        <div class="dc-icon">📘</div>
+        <div class="dc-title">Étude Scientifique Complète</div>
+        <div class="dc-desc">Architecture système, indices végétaux, IA détection maladies, cartographie, modèle économique, roadmap 4 phases, bibliographie 15 sources.</div>
+        <div class="dc-meta">AGROVISION_RESEARCH_STUDY.md · ~15 pages</div>
+      </div>
+
+      <div class="doc-card" onclick="loadDoc('research')">
+        <div class="dc-icon">🔍</div>
+        <div class="dc-title">Rapport de Recherche R&D</div>
+        <div class="dc-desc">Traçabilité des 8 requêtes WebSearch, findings par thème (indices, IA, cartographie, RDC, Belgique, ROI), décisions prises et hypothèses infirmées.</div>
+        <div class="dc-meta">RAPPORT_RECHERCHE_20260418.md · ~6 pages</div>
+      </div>
+
+      <div class="doc-card" onclick="loadDoc('changelog')">
+        <div class="dc-icon">🛠️</div>
+        <div class="dc-title">Changelog Technique</div>
+        <div class="dc-desc">Détail de chaque modification apportée à app.html : nouvelles constantes, formules mathématiques, fonctions, CSS, HTML, checklist de tests.</div>
+        <div class="dc-meta">CHANGELOG_TECHNIQUE.md · ~8 pages</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOC PANEL -->
+  <div class="panel" id="panel-doc">
+    <div class="breadcrumb">
+      <span onclick="showPanel('index')">← Tous les documents</span>
+      &nbsp;/&nbsp;<span id="docBreadcrumb">—</span>
+    </div>
+    <button class="back-btn" onclick="showPanel('index')">← Retour à la bibliothèque</button>
+    <div class="md-content" id="mdContent">Chargement…</div>
+  </div>
+
+</div>
+
+<div class="footer">AgroVision · ArtiAirLink · contact : jonathan.ots1@gmail.com</div>
+
+<script>
+// Contenu des documents embarqué directement pour lecture offline
+const DOCS = {
+  study: {
+    title: 'Étude Scientifique Complète',
+    file:  'AGROVISION_RESEARCH_STUDY.md'
+  },
+  research: {
+    title: 'Rapport de Recherche R&D — 18 Avril 2026',
+    file:  'RAPPORT_RECHERCHE_20260418.md'
+  },
+  changelog: {
+    title: 'Changelog Technique',
+    file:  'CHANGELOG_TECHNIQUE.md'
+  }
+};
+
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  const tabMap = { index: 0, study: 1, research: 2, changelog: 3 };
+  const tabs = document.querySelectorAll('.tab');
+  if (tabMap[name] !== undefined) tabs[tabMap[name]]?.classList.add('active');
+}
+
+async function loadDoc(key) {
+  const doc = DOCS[key];
+  if (!doc) return;
+
+  showPanel('doc');
+  document.getElementById('docBreadcrumb').textContent = doc.title;
+
+  // Highlight the right tab
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const tabIdx = { study: 1, research: 2, changelog: 3 };
+  document.querySelectorAll('.tab')[tabIdx[key]]?.classList.add('active');
+
+  const el = document.getElementById('mdContent');
+  el.innerHTML = '<p style="color:var(--muted);padding:20px 0">Chargement du document…</p>';
+
+  try {
+    const res = await fetch(doc.file);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+
+    // Configure marked
+    marked.setOptions({
+      breaks: true,
+      gfm: true,
+    });
+
+    el.innerHTML = marked.parse(text);
+
+    // Make checkboxes read-only
+    el.querySelectorAll('input[type=checkbox]').forEach(cb => cb.disabled = true);
+
+    // Scroll to top
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch(e) {
+    el.innerHTML = `
+      <div style="padding:24px;background:#fde8e6;border-radius:14px;border:1px solid #ecc0c0;color:var(--red)">
+        <strong>Impossible de charger le fichier</strong><br>
+        <span style="font-size:13px;opacity:.8">Ce lecteur fonctionne en mode serveur HTTP.<br>
+        Pour lire localement : ouvrez les fichiers .md directement dans VS Code ou tout éditeur Markdown.</span><br><br>
+        <code style="font-size:12px;background:rgba(0,0,0,.06);padding:4px 8px;border-radius:6px">${doc.file}</code>
+      </div>`;
+  }
+}
+
+// Handle tab clicks for tabs that correspond to docs
+document.querySelectorAll('.tab')[1].addEventListener('click', () => loadDoc('study'));
+document.querySelectorAll('.tab')[2].addEventListener('click', () => loadDoc('research'));
+document.querySelectorAll('.tab')[3].addEventListener('click', () => loadDoc('changelog'));
+</script>
+</body>
+</html>
