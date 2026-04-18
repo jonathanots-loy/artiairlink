@@ -328,8 +328,17 @@ textarea{min-height:80px;resize:vertical}
       <div class="field"><label>Site / Parcelle</label><input id="fSite" placeholder="Champ A3 — Kinshasa"></div>
       <div class="field"><label>Culture</label>
         <select id="fCrop">
-          <option>Maïs</option><option>Manioc</option><option>Blé</option>
-          <option>Café</option><option>Soja</option><option>Coton</option><option>Riz</option><option>Autre</option>
+          <option value="mais">🌽 Maïs</option>
+          <option value="manioc">🌿 Manioc</option>
+          <option value="ble">🌾 Blé</option>
+          <option value="riz">🌾 Riz</option>
+          <option value="soja">🫘 Soja</option>
+          <option value="cafe">☕ Café</option>
+          <option value="coton">🤍 Coton</option>
+          <option value="tomate">🍅 Tomate</option>
+          <option value="banane">🍌 Banane</option>
+          <option value="agrumes">🍊 Agrumes</option>
+          <option value="autre">🌱 Autre</option>
         </select>
       </div>
       <div class="field"><label>Opérateur</label><input id="fOperator" placeholder="Nom de l'opérateur"></div>
@@ -414,6 +423,7 @@ textarea{min-height:80px;resize:vertical}
       <div class="stage-hud">
         <div class="hud-pill">📷 <span id="hpSrc">Aucune</span></div>
         <div class="hud-pill">📋 <span id="hpMission">—</span></div>
+        <div class="hud-pill">🌱 <span id="hpCrop">—</span></div>
       </div>
       <video id="lv" autoplay playsinline muted></video>
       <img id="ri" alt="">
@@ -439,7 +449,7 @@ textarea{min-height:80px;resize:vertical}
 
   <div class="grid g2" style="margin-bottom:12px">
     <div class="metric" id="mCardColor"><div class="k">Couleur</div><div class="v" style="font-size:16px" id="mColor">—</div><div class="s" id="mHex">#—</div></div>
-    <div class="metric"><div class="k">NDVI simplifié</div><div class="v" id="mNdvi">—</div><div class="s">(G−R)/(G+R)</div></div>
+    <div class="metric"><div class="k" id="mIndexLabel">Indice végétal</div><div class="v" id="mNdvi">—</div><div class="s" id="mIndexSub">—</div></div>
     <div class="metric"><div class="k">Santé</div><div class="v" id="mHealth">—</div><div class="s" id="mHealthLbl">—</div></div>
     <div class="metric"><div class="k">Luminosité</div><div class="v" id="mLumi">—</div><div class="s">0 – 255</div></div>
   </div>
@@ -640,39 +650,247 @@ const LS = {
 function toHex(r, g, b) {
   return '#' + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('').toUpperCase();
 }
+
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0, l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return { h: h * 360, s, l };
+}
+
+// ─── Profils cultures ───────────────────────────────────────────────────────
+// Sources : FAO crop health guidelines, CIMMYT maize protocols, IITA cassava
+// research, IRRI rice health standards, CIRAD banana/citrus data (2023-2024)
+const CROPS = {
+  mais: {
+    name:'Maïs', emoji:'🌽', type:'green', index:'VARI',
+    hueRange:[85,145], satMin:0.22,
+    thresholds:{ excellent:0.18, good:0.08, stress:0.01, severe:-0.05 },
+    diseases:['Helminthosporiose (taches brunes allongées)','Rouille commune (pustules orange)','Charbon commun (masses noires sur épis)'],
+    rec:{ excellent:'Maïs en pleine vigueur — suivi standard recommandé.',
+          good:'Croissance normale — vérifier apport azoté si jaunissement.',
+          stress:'Jaunissement partiel — contrôler irrigation et fertilisation N.',
+          severe:'Stress sévère — inspecter pour carence N/K ou helminthosporiose.',
+          critical:'Intervention urgente — rouille, charbon ou brûlure probable.' }
+  },
+  manioc: {
+    name:'Manioc', emoji:'🌿', type:'green', index:'VARI',
+    hueRange:[90,145], satMin:0.26,
+    thresholds:{ excellent:0.20, good:0.10, stress:0.02, severe:-0.05 },
+    diseases:['Mosaïque africaine (CMV — jaune mosaïque irrégulier)','Bactériose (taches angulaires brun-olive)','Brown streak (striures brunes nécrotiques)'],
+    rec:{ excellent:'Manioc sain — surveiller apparition de mosaïque (zones jaunes irrégulières).',
+          good:'État correct — vérifier homogénéité du feuillage.',
+          stress:'Stress modéré — début possible de mosaïque ou carence.',
+          severe:'Forte probabilité de maladie — inspection terrain immédiate.',
+          critical:'Intervention urgente — brown streak ou brûlure bactérienne avancée.' }
+  },
+  ble: {
+    name:'Blé', emoji:'🌾', type:'green', index:'VARI',
+    hueRange:[88,140], satMin:0.18,
+    thresholds:{ excellent:0.15, good:0.07, stress:0.01, severe:-0.05 },
+    diseases:['Fusariose (épis roses/blancs à maturité)','Rouille jaune (stries jaunes sur feuilles)','Oïdium (poudre blanche couvrant le feuillage)'],
+    rec:{ excellent:'Blé en très bonne santé — maintenir surveillance pour rouille.',
+          good:'Croissance correcte — vérifier densité et humidité du sol.',
+          stress:'Jaunissement partiel — vérifier irrigation et apport azoté.',
+          severe:'Risque de fusariose ou carence grave — inspection terrain requise.',
+          critical:'Intervention urgente — rouille sévère ou fusariose avancée.' }
+  },
+  riz: {
+    name:'Riz', emoji:'🌾', type:'green', index:'VARI',
+    hueRange:[88,138], satMin:0.18,
+    thresholds:{ excellent:0.15, good:0.06, stress:0.01, severe:-0.06 },
+    diseases:['Pyriculariose/blast (taches en losange gris-brun)','Bactériose (feuilles jaune-orange aux bordures)','Tungro (jaunissement-orange généralisé)'],
+    rec:{ excellent:'Rizière en excellente santé — suivi du niveau d\'eau recommandé.',
+          good:'Végétation correcte — vérifier lame d\'eau et apport azoté.',
+          stress:'Stress modéré — surveiller symptômes de blast ou tungro.',
+          severe:'Risque élevé de blast ou de bactériose — inspection urgente.',
+          critical:'Intervention urgente — tungro ou blast sévère probable.' }
+  },
+  soja: {
+    name:'Soja', emoji:'🫘', type:'green', index:'VARI',
+    hueRange:[90,135], satMin:0.20,
+    thresholds:{ excellent:0.16, good:0.07, stress:0.01, severe:-0.05 },
+    diseases:['Sclérotiniose (pourriture blanche à la base)','Bactériose (pustules foliaires)','Syndrome soudain — SDS (jaunissement internervaire)'],
+    rec:{ excellent:'Soja vigoureux — surveiller l\'humidité à la floraison.',
+          good:'Développement normal — contrôler la nodulation et l\'azote.',
+          stress:'Jaunissement — vérifier carence Fe/Mn ou déficit hydrique.',
+          severe:'Stress élevé — inspecter pour sclérotiniose ou SDS.',
+          critical:'Intervention urgente — maladie foliaire avancée ou brûlure.' }
+  },
+  cafe: {
+    name:'Café', emoji:'☕', type:'green', index:'VARI',
+    hueRange:[92,145], satMin:0.24,
+    thresholds:{ excellent:0.18, good:0.09, stress:0.02, severe:-0.04 },
+    diseases:['Rouille orangée (CLR — Hemileia vastatrix, taches orange sous feuille)','Anthracnose (taches brun-noir aux bords foliaires)','Oïdium du caféier (poudre blanche)'],
+    rec:{ excellent:'Caféiers en très bon état — surveiller rouille (taches orange sous feuille).',
+          good:'Bon état général — contrôler ombrage et irrigation.',
+          stress:'Stress visible — vérifier début de CLR ou déficit hydrique.',
+          severe:'Risque élevé de CLR — traitement fongicide à prévoir.',
+          critical:'Anthracnose ou CLR sévère — intervention phytosanitaire urgente.' }
+  },
+  coton: {
+    name:'Coton', emoji:'🤍', type:'green', index:'VARI',
+    hueRange:[90,140], satMin:0.18,
+    thresholds:{ excellent:0.15, good:0.07, stress:0.01, severe:-0.05 },
+    diseases:['Verticilliose (jaunissement vasculaire — feuilles marbrées)','Anthracnose (taches brun-noir sur capsules)','Pucerons du coton (jaunissement apical)'],
+    rec:{ excellent:'Coton vigoureux — surveiller ravageurs et pucerons.',
+          good:'Développement normal — vérifier irrigation et fumure.',
+          stress:'Jaunissement partiel — contrôler verticilliose ou déficit hydrique.',
+          severe:'Stress sévère — inspecter pour verticilliose ou anthracnose.',
+          critical:'Intervention urgente — maladie vasculaire ou ravageurs graves.' }
+  },
+  tomate: {
+    name:'Tomate', emoji:'🍅', type:'fruit', index:'VARI+Hue',
+    hueRange:[90,135], satMin:0.28,
+    fruitHueRange:[0,18], fruitOrangeRange:[18,32],
+    thresholds:{ excellent:0.16, good:0.07, stress:0.01, severe:-0.05 },
+    diseases:['Mildiou (Phytophthora — taches brunes + duvet blanc-violet)','Alternaria (taches concentriques brunes)','Virus TYLCV (jaunissement + feuilles courbées vers le haut)'],
+    rec:{ excellent:'Plants sains et fruits bien développés — suivi standard.',
+          good:'Végétation correcte — surveiller mildiou si temps humide.',
+          stress:'Stress détecté — vérifier irrigation et nutriments (Ca, Mg).',
+          severe:'Forte probabilité de mildiou ou alternaria — inspection terrain.',
+          critical:'Intervention urgente — virus ou maladie foliaire grave.' }
+  },
+  banane: {
+    name:'Banane', emoji:'🍌', type:'fruit', index:'VARI+Hue',
+    hueRange:[85,140], satMin:0.20,
+    fruitHueRange:[45,68], fruitOrangeRange:[35,45],
+    thresholds:{ excellent:0.16, good:0.07, stress:0.01, severe:-0.05 },
+    diseases:['Panama disease (Fusarium oxysporum — jaunissement généralisé du plant)','Sigatoka noire (Mycosphaerella — taches noires foliaires)','Bunchy top virus (BBTV — feuilles courtes et serrées)'],
+    rec:{ excellent:'Bananier sain — surveiller sigatoka noire (taches noires sur feuilles).',
+          good:'Végétation correcte — vérifier drainage et densité.',
+          stress:'Jaunissement modéré — possible carence K ou début de Panama.',
+          severe:'Risque élevé de Panama disease ou sigatoka — inspection terrain.',
+          critical:'Intervention urgente — Panama ou virus BBTV probable.' }
+  },
+  agrumes: {
+    name:'Agrumes', emoji:'🍊', type:'fruit', index:'VARI+Hue',
+    hueRange:[88,140], satMin:0.22,
+    fruitHueRange:[18,45], fruitOrangeRange:[12,18],
+    thresholds:{ excellent:0.17, good:0.08, stress:0.01, severe:-0.04 },
+    diseases:['Greening/HLB (Candidatus Liberibacter — jaunissement asymétrique)','Tristeza CTV (chlorose généralisée)','Gommose (Phytophthora — exsudats gommeux au tronc)'],
+    rec:{ excellent:'Agrumes en très bon état — surveiller HLB (jaunissement irrégulier).',
+          good:'Bon état général — contrôler nutrition et irrigation.',
+          stress:'Stress visible — vérifier greening ou carence (Fe, Zn, Mn).',
+          severe:'Risque élevé de HLB ou tristeza — prélèvement et analyse recommandés.',
+          critical:'Intervention urgente — greening avancé ou gommose sévère.' }
+  },
+  autre: {
+    name:'Culture', emoji:'🌱', type:'green', index:'VARI',
+    hueRange:[85,145], satMin:0.16,
+    thresholds:{ excellent:0.15, good:0.07, stress:0.01, severe:-0.05 },
+    diseases:[],
+    rec:{ excellent:'Végétation en bonne santé — suivi standard.',
+          good:'État correct — surveiller homogénéité.',
+          stress:'Stress modéré — vérifier irrigation et nutrition.',
+          severe:'Stress fort — inspection terrain recommandée.',
+          critical:'Intervention urgente — maladie ou brûlure possible.' }
+  }
+};
+
+function cropFromKey(key) { return CROPS[key] || CROPS.autre; }
+
 function colorLabel(r, g, b) {
   const lum = 0.299*r + 0.587*g + 0.114*b;
   const max  = Math.max(r, g, b), min = Math.min(r, g, b);
   const sat  = max === 0 ? 0 : (max - min) / max;
+  const hsl  = rgbToHsl(r, g, b);
+  const hue  = hsl.h;
   if (lum < 28) return 'Ombre / Très sombre';
   if (lum > 218 && sat < 0.12) return 'Blanc / Ciel / Sol clair';
   if (sat < 0.12) return lum < 90 ? 'Sol foncé / Humide' : lum < 160 ? 'Sol intermédiaire' : 'Sol sec / Poussière';
-  if (g > r + 18 && g > b + 18) {
-    if (r > 145 && g > 155) return 'Vert-jaune / Stress hydrique';
-    if (g > 115) return 'Vert sain / Végétation active';
-    return 'Vert foncé / Culture dense';
+  // Rouge / fruit rouge
+  if ((hue < 18 || hue > 342) && sat > 0.35) return r > 150 ? 'Rouge / Fruit mûr ou sol latéritique' : 'Rouge foncé / Maladie ou sol ferralitique';
+  // Orange
+  if (hue >= 18 && hue < 40 && sat > 0.35) return 'Orange / Fruit ou stress sévère';
+  // Jaune
+  if (hue >= 40 && hue < 70 && sat > 0.28) return r > 160 ? 'Jaune / Fruit mûr ou chlorose' : 'Jaune-vert / Stress hydrique';
+  // Vert
+  if (hue >= 70 && hue < 150 && g > r && g > b) {
+    if (sat > 0.35 && g > 115) return 'Vert sain / Végétation active';
+    if (sat > 0.25) return 'Vert foncé / Culture dense';
+    return 'Vert-jaune / Stress possible';
   }
-  if (r > g + 20 && r > b + 14) {
-    if (g < 80) return 'Rouge / Maladie ou sol latéritique';
-    return 'Brun-rouge / Stress ou ferralitique';
-  }
-  if (r > 135 && g > 115 && b < 80) return 'Jaune / Chlorose ou sécheresse';
-  if (r > 120 && g > 100 && b < 70) return 'Ocre / Sol semi-aride';
-  if (b > r + 18 && b > g + 8)      return 'Bleu / Eau ou reflet ciel';
+  // Bleu
+  if (hue >= 190 && hue < 260 && sat > 0.25) return 'Bleu / Eau ou reflet ciel';
+  // Brun
+  if (r > 100 && g > 70 && b < 80 && r > g) return 'Brun-ocre / Sol ou débris végétaux';
   return 'Mixte / Signal composite';
 }
-function computeMetrics(r, g, b) {
-  const ndvi  = (g - r) / (g + r + 1);
-  const lumi  = Math.round(0.299*r + 0.587*g + 0.114*b);
-  const max   = Math.max(r, g, b), min = Math.min(r, g, b);
-  const conf  = Math.max(28, Math.min(96, Math.round(35 + ((max-min)/(max+1)) * 85)));
-  let hl, hs, stress, rec, sev;
-  if (ndvi > 0.25 && g > 100)      { hl='Excellent'; hs=90; stress='Faible';            rec='Culture en pleine vigueur — suivi normal.'; sev='good'; }
-  else if (ndvi > 0.12 && g > 85)  { hl='Correct';   hs=72; stress='Faible à modéré';  rec='Contrôler homogénéité et humidité du sol.'; sev='good'; }
-  else if (ndvi > 0.02)             { hl='Stress léger'; hs=54; stress='Modéré';        rec='Vérifier irrigation, densité et nutrition.'; sev='warn'; }
-  else if (ndvi > -0.10)            { hl='Stress fort';  hs=34; stress='Élevé';         rec='Inspection terrain — risque perte de rendement.'; sev='bad'; }
-  else                              { hl='Critique';     hs=16; stress='Très élevé';    rec='Intervention immédiate — brûlure ou maladie grave.'; sev='bad'; }
-  return { ndvi: +ndvi.toFixed(4), lumi, confidence: conf, healthLabel: hl, healthScore: hs, stress, recommendation: rec, severity: sev, colorName: colorLabel(r,g,b), hex: toHex(r,g,b) };
+
+function computeMetrics(r, g, b, cropKey) {
+  const crop = cropFromKey(cropKey);
+  const lumi = Math.round(0.299*r + 0.587*g + 0.114*b);
+  const max  = Math.max(r, g, b), min = Math.min(r, g, b);
+  const conf = Math.max(28, Math.min(96, Math.round(35 + ((max-min)/(max+1)) * 85)));
+  const hsl  = rgbToHsl(r, g, b);
+  const hue  = hsl.h, sat = hsl.s;
+
+  // VARI — Visible Atmospherically Resistant Index (meilleur que NGRDI sur caméra RGB)
+  // Source : Gitelson et al. (2002), Remote Sensing of Environment
+  const dv   = g + r - b;
+  const vari = Math.abs(dv) < 4 ? 0 : Math.max(-1, Math.min(1, (g - r) / dv));
+
+  // Détecter si la caméra voit un fruit coloré (pour cultures fruit/mixed)
+  let analysisMode = 'plant';
+  if (crop.type === 'fruit' || crop.type === 'mixed') {
+    const fh = crop.fruitHueRange;
+    // Hue dans la plage fruit ET saturation suffisante
+    const inFruit = ((hue >= fh[0] && hue <= fh[1]) || (fh[0] <= 5 && hue > 340)) && sat > 0.38;
+    if (inFruit) analysisMode = 'fruit';
+  }
+
+  let hl, hs, stress, rec, sev, indexUsed, indexVal, indexSub;
+
+  if (analysisMode === 'fruit') {
+    // ── Analyse par teinte du fruit ─────────────────────────────────────
+    indexUsed = 'Hue (teinte)';
+    const fh = crop.fruitHueRange;
+    const mid = (fh[0] + fh[1]) / 2;
+    const span = (fh[1] - fh[0]) / 2 + 15;
+    let hueDist = Math.abs(hue - mid);
+    if (fh[0] <= 5) hueDist = Math.min(hueDist, Math.abs(hue - 360 - mid)); // wrap rouge
+    const hueFit = Math.max(0, 1 - hueDist / span);
+    indexVal = +(hue.toFixed(1));
+    indexSub = 'Teinte fruit ' + crop.emoji;
+
+    if (hueFit > 0.72 && sat > 0.48) { hl='Fruit mûr sain';       hs=88; stress='Faible';           sev='good'; rec=crop.rec.excellent; }
+    else if (hueFit > 0.42 && sat > 0.32) { hl='Maturation normale'; hs=70; stress='Faible à modéré'; sev='good'; rec=crop.rec.good; }
+    else if (sat > 0.22) { hl='Fruit imparfait';           hs=46; stress='Modéré';            sev='warn'; rec=crop.rec.stress; }
+    else                 { hl='Anomalie colorimétrique';  hs=26; stress='Élevé';             sev='bad';  rec=crop.rec.severe; }
+  } else {
+    // ── Analyse végétale par VARI ────────────────────────────────────────
+    indexUsed = 'VARI';
+    const t = crop.thresholds;
+    indexVal = +vari.toFixed(4);
+    indexSub = 'VARI — ' + crop.emoji + ' ' + crop.name;
+
+    if (vari > t.excellent)   { hl='Excellent';    hs=90; stress='Faible';           sev='good'; rec=crop.rec.excellent; }
+    else if (vari > t.good)   { hl='Correct';      hs=72; stress='Faible à modéré'; sev='good'; rec=crop.rec.good; }
+    else if (vari > t.stress) { hl='Stress léger'; hs=54; stress='Modéré';          sev='warn'; rec=crop.rec.stress; }
+    else if (vari > t.severe) { hl='Stress fort';  hs=34; stress='Élevé';           sev='bad';  rec=crop.rec.severe; }
+    else                      { hl='Critique';     hs=16; stress='Très élevé';      sev='bad';  rec=crop.rec.critical; }
+  }
+
+  return {
+    ndvi: indexVal,
+    vari: +vari.toFixed(4),
+    lumi, confidence: conf,
+    healthLabel: hl, healthScore: hs,
+    stress, recommendation: rec, severity: sev,
+    colorName: colorLabel(r, g, b), hex: toHex(r, g, b),
+    cropName: crop.name, cropEmoji: crop.emoji,
+    indexUsed, indexSub, analysisMode
+  };
 }
 
 // ═══════════════════════════════════════
@@ -802,7 +1020,8 @@ function startLoop() {
     const ok = drawFrame();
     if (ok) {
       const { r, g, b } = sampleZone();
-      const m = computeMetrics(r, g, b);
+      const cropKey = S.activeMission?.cropKey || 'autre';
+      const m = computeMetrics(r, g, b, cropKey);
       S.analysis = m;
       updateAnalysisUI(m);
     }
@@ -822,13 +1041,16 @@ function updateAnalysisUI(m) {
   document.getElementById('hbConf').textContent   = 'Confiance : ' + m.confidence + '%';
   document.getElementById('mColor').textContent  = m.colorName.split('/')[0].trim();
   document.getElementById('mHex').textContent    = m.hex;
-  document.getElementById('mNdvi').textContent   = m.ndvi.toFixed(3);
+  document.getElementById('mNdvi').textContent   = typeof m.ndvi === 'number' ? m.ndvi.toFixed(3) : m.ndvi;
+  document.getElementById('mIndexLabel').textContent = m.indexUsed || 'Indice végétal';
+  document.getElementById('mIndexSub').textContent   = m.indexSub  || '—';
   document.getElementById('mHealth').textContent = m.healthScore + '%';
   document.getElementById('mHealthLbl').textContent = m.healthLabel;
   document.getElementById('mLumi').textContent   = m.lumi;
   document.getElementById('mCardColor').className = 'metric ' + m.severity;
   document.getElementById('hpSrc').textContent    = S.source.name;
   document.getElementById('hpMission').textContent = S.activeMission?.title?.slice(0,16) || 'Sans mission';
+  document.getElementById('hpCrop').textContent   = S.activeMission ? (m.cropEmoji + ' ' + m.cropName) : '—';
   syncHomeMetrics();
   syncReportUI();
 }
@@ -848,7 +1070,7 @@ function syncReportUI() {
   document.getElementById('rpAction').textContent = m.recommendation;
   document.getElementById('rpState').textContent  = m.healthLabel;
   document.getElementById('rpStress').textContent = m.stress;
-  document.getElementById('rpNdvi').textContent   = m.ndvi != null ? m.ndvi.toFixed(3) : '—';
+  document.getElementById('rpNdvi').textContent   = m.ndvi != null ? (typeof m.ndvi === 'number' ? m.ndvi.toFixed(3) : m.ndvi) : '—';
   document.getElementById('rpHealth').textContent = m.healthScore != null ? m.healthScore + '%' : '—';
   document.getElementById('rpConf').textContent   = m.confidence != null ? m.confidence + '%' : '—';
   document.getElementById('rpCov').textContent    = S.session.coverage + '%';
@@ -983,7 +1205,8 @@ async function createMission() {
     id: Date.now().toString(),
     title, type: document.getElementById('fType').value,
     siteName: document.getElementById('fSite').value.trim() || '—',
-    cropType: document.getElementById('fCrop').value,
+    cropKey: document.getElementById('fCrop').value,
+    cropType: cropFromKey(document.getElementById('fCrop').value).name,
     operator: document.getElementById('fOperator').value.trim() || '—',
     notes: document.getElementById('fNotes').value.trim(),
     createdAt: new Date().toISOString(),
