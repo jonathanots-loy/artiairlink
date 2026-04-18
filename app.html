@@ -270,7 +270,31 @@ textarea{min-height:80px;resize:vertical}
 .ibr-fill.idx-warn{background:var(--amber2)}
 .ibr-fill.idx-bad{background:var(--red2)}
 .ibr-val{font-size:11px;font-weight:800;color:var(--ink);width:46px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
+/* MAP VIEWS */
+.map-view-btns{display:flex;gap:6px;margin-bottom:12px}
+.mvb{padding:7px 0;border-radius:999px;font-size:11px;font-weight:800;background:#fff;
+  border:1px solid var(--line2);color:var(--muted);cursor:pointer;transition:all .15s;
+  flex:1;text-align:center;letter-spacing:.03em}
+.mvb.active{background:var(--G1);color:#fff;border-color:var(--G1);box-shadow:0 2px 8px rgba(35,77,50,.25)}
+.mvb:active{transform:scale(.97)}
+#leafletMap{border-radius:20px;overflow:hidden;border:1px solid var(--line);
+  height:300px;margin-bottom:12px;display:none;z-index:1}
+#leafletMap.show{display:block}
+.leaflet-container{font-family:inherit}
+.lf-popup strong{color:var(--G1);font-weight:800}
+.lf-popup{font-size:12px;line-height:1.7}
+.presc-legend{display:grid;gap:6px;margin-top:10px}
+.pl-row{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:12px;
+  background:#fff;border:1px solid var(--line);font-size:12px}
+.pl-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.pl-label{font-weight:700;color:var(--ink)}
+.pl-desc{font-size:11px;color:var(--muted);margin-left:auto}
+.gps-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:10px}
+.gps-row .field{flex:1;margin:0}
+.gps-row button{flex-shrink:0;padding:11px 14px;font-size:12px}
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 <div class="app">
@@ -504,25 +528,59 @@ textarea{min-height:80px;resize:vertical}
 
 <!-- ── CARTE MISSION ── -->
 <section class="screen" id="screen-map">
+
   <div class="card">
-    <div class="section-title">Carte de mission — Trajectoire drone</div>
-    <p class="section-sub">Chaque capture est placée sur la grille de vol en ordre lawnmower. La couleur indique l'état végétal au moment de la capture.</p>
-    <div class="map-wrap" style="height:300px">
+    <div class="section-title" style="margin-bottom:4px">Cartographie terrain</div>
+    <p class="section-sub" style="margin-bottom:12px">Visualisez les captures sur carte réelle avec interpolation IDW et zones de prescription.</p>
+
+    <!-- View toggle -->
+    <div class="map-view-btns">
+      <div class="mvb active" id="mvb-grid"   onclick="toggleMapView('grid')">🔲 Grille</div>
+      <div class="mvb"        id="mvb-terrain" onclick="toggleMapView('terrain')">🌍 Terrain</div>
+      <div class="mvb"        id="mvb-presc"   onclick="toggleMapView('presc')">🎯 Prescription</div>
+    </div>
+
+    <!-- Grid view (SVG) -->
+    <div class="map-wrap" id="mapGridWrap" style="height:300px">
       <div class="map-canvas-bg"></div>
       <div class="map-grid-overlay"></div>
       <svg id="mapSvg" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
     </div>
-    <div class="map-legend">
+
+    <!-- Leaflet map (terrain + prescription) -->
+    <div id="leafletMap"></div>
+
+    <!-- Legend adapts to view -->
+    <div class="map-legend" id="legendGrid">
       <div class="leg"><span class="leg-dot" style="background:#8cbf6c"></span>Excellent</div>
       <div class="leg"><span class="leg-dot" style="background:#d1a05a"></span>Stress</div>
       <div class="leg"><span class="leg-dot" style="background:#ba5a4e"></span>Critique</div>
+    </div>
+    <div class="presc-legend" id="legendPresc" style="display:none">
+      <div class="pl-row"><div class="pl-dot" style="background:#4caf50"></div><div class="pl-label">Bonne santé</div><div class="pl-desc">Santé ≥ 60% — maintien</div></div>
+      <div class="pl-row"><div class="pl-dot" style="background:#ff9800"></div><div class="pl-label">Stress modéré</div><div class="pl-desc">35–60% — surveillance</div></div>
+      <div class="pl-row"><div class="pl-dot" style="background:#e53935"></div><div class="pl-label">Intervention requise</div><div class="pl-desc">Santé &lt; 35% — traitement</div></div>
     </div>
   </div>
 
   <div class="grid g3" style="margin-bottom:12px">
     <div class="metric"><div class="k">Couverture</div><div class="v" id="mapCov">0%</div><div class="s">Mission</div></div>
     <div class="metric"><div class="k">Captures</div><div class="v" id="mapCaps">0</div><div class="s">Points</div></div>
-    <div class="metric"><div class="k">NDVI moyen</div><div class="v" id="mapNdvi">—</div><div class="s">Session</div></div>
+    <div class="metric"><div class="k">Santé moy.</div><div class="v" id="mapNdvi">—</div><div class="s">Session</div></div>
+  </div>
+
+  <!-- GPS center card -->
+  <div class="card">
+    <div class="section-title">Centre GPS du champ</div>
+    <p class="section-sub" style="margin-bottom:10px">Entrez les coordonnées du centre de la parcelle pour la vue terrain.</p>
+    <div class="gps-row">
+      <div class="field"><label>Latitude</label><input type="number" id="gpsLat" step="0.0001" placeholder="50.5950"></div>
+      <div class="field"><label>Longitude</label><input type="number" id="gpsLon" step="0.0001" placeholder="3.9120"></div>
+      <button class="bp" onclick="saveCenterGPS()">📍 Définir</button>
+    </div>
+    <div class="row">
+      <button class="bs btn-full" onclick="exportGeoJSON()">⬇ Export GeoJSON</button>
+    </div>
   </div>
 
   <div class="card">
@@ -644,6 +702,8 @@ const S = {
   loopRunning: false,
   selectedIndex: 'VARI',
   mapParams: { altitude: 30, overlap: 75, speed: 4, missionType: 'Lawnmower' },
+  mapCenter: { lat: 50.595, lon: 3.912 },
+  mapView: 'grid',
 };
 let toastTimer = null, deferredPrompt = null;
 
@@ -1266,6 +1326,7 @@ function renderMap() {
   });
 
   svg.innerHTML = paths + points;
+  if (S.mapView !== 'grid' && _lfMap) renderLeafletMap();
 }
 
 function updateMapStats() {
@@ -1273,8 +1334,10 @@ function updateMapStats() {
   document.getElementById('mapCov').textContent  = S.session.coverage + '%';
   document.getElementById('mapCaps').textContent = caps.length;
   if (caps.length) {
-    const avg = caps.reduce((s, c) => s + c.ndvi, 0) / caps.length;
-    document.getElementById('mapNdvi').textContent = avg.toFixed(3);
+    const avg = caps.reduce((s, c) => s + (c.healthScore || 0), 0) / caps.length;
+    document.getElementById('mapNdvi').textContent = Math.round(avg) + '%';
+  } else {
+    document.getElementById('mapNdvi').textContent = '—';
   }
 }
 
@@ -1295,6 +1358,227 @@ function updateMapCalc() {
   const gsd   = (alt * 0.7) / 100;
   const strip = Math.round(gsd * 4000 * (1 - ov / 100));
   document.getElementById('mapCalcText').textContent = `GSD ≈ ${(gsd*100).toFixed(1)} mm/px · Bande ≈ ${strip} m · Vitesse ${spd} m/s`;
+}
+
+// ═══════════════════════════════════════
+// PHASE 2C — CARTOGRAPHIE LEAFLET + IDW + PRESCRIPTION
+// ═══════════════════════════════════════
+let _lfMap = null, _lfLayers = [];
+
+function computeGPSPos(idx, center, alt, overlapPct) {
+  const COLS = 5;
+  const col = idx % COLS;
+  const row = Math.floor(idx / COLS);
+  const colPos = row % 2 === 0 ? col : (COLS - 1 - col); // lawnmower alternation
+  // footprint width (m) = GSD (m/px) × image width (px) ; GSD ≈ alt × 0.007 m/px for typical drone
+  const footprintM = alt * 28;
+  const strip = footprintM * (1 - overlapPct / 100) || 5;
+  const dx = (colPos - 2) * strip; // E/W offset in meters from center (col 2 = center)
+  const dy = -row * strip;          // N/S offset (negative = south)
+  const lat = center.lat + dy / 111320;
+  const lon = center.lon + dx / (111320 * Math.cos(center.lat * Math.PI / 180));
+  return { lat, lon };
+}
+
+function computeIDW(pts, gridN) {
+  if (!pts.length) return [];
+  const lats = pts.map(p => p.lat), lons = pts.map(p => p.lon);
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+  const minLon = Math.min(...lons), maxLon = Math.max(...lons);
+  const buf = 0.0004;
+  const dlat = (maxLat - minLat) || 0.0015;
+  const dlon = (maxLon - minLon) || 0.0015;
+  const cells = [];
+  for (let r = 0; r < gridN; r++) {
+    for (let c = 0; c < gridN; c++) {
+      const lat = minLat - buf + (dlat + 2 * buf) * (r / (gridN - 1));
+      const lon = minLon - buf + (dlon + 2 * buf) * (c / (gridN - 1));
+      let num = 0, den = 0;
+      for (const p of pts) {
+        const d = Math.sqrt((p.lat - lat) ** 2 + (p.lon - lon) ** 2);
+        if (d < 1e-9) { num = p.health; den = 1; break; }
+        const w = 1 / (d * d);
+        num += w * p.health; den += w;
+      }
+      cells.push({ lat, lon, value: den > 0 ? num / den : 0 });
+    }
+  }
+  return cells;
+}
+
+function healthToColor(h) {
+  if (h >= 0.6) return '#4caf50';
+  if (h >= 0.35) return '#ff9800';
+  return '#e53935';
+}
+
+function saveCenterGPS() {
+  const lat = parseFloat(document.getElementById('gpsLat').value);
+  const lon = parseFloat(document.getElementById('gpsLon').value);
+  if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+    toast('Coordonnées GPS invalides', true); return;
+  }
+  S.mapCenter = { lat, lon };
+  LS.set('mapCenter', S.mapCenter);
+  toast('Centre GPS enregistré ✓');
+  if (S.mapView !== 'grid') renderLeafletMap();
+}
+
+function toggleMapView(view) {
+  S.mapView = view;
+  ['grid', 'terrain', 'presc'].forEach(v => {
+    document.getElementById('mvb-' + v).classList.toggle('active', v === view);
+  });
+  const isLeaflet = view !== 'grid';
+  document.getElementById('mapGridWrap').style.display = isLeaflet ? 'none' : 'block';
+  document.getElementById('legendGrid').style.display  = view === 'grid' ? 'flex' : 'none';
+  document.getElementById('legendPresc').style.display = view === 'presc' ? 'grid' : 'none';
+  const lfEl = document.getElementById('leafletMap');
+  lfEl.classList.toggle('show', isLeaflet);
+  if (isLeaflet) {
+    if (!_lfMap) initLeafletMap();
+    else _lfMap.invalidateSize();
+    renderLeafletMap();
+  }
+}
+
+function initLeafletMap() {
+  _lfMap = L.map('leafletMap', { zoomControl: true, attributionControl: false });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 22, opacity: 0.85,
+    attribution: '© OpenStreetMap'
+  }).addTo(_lfMap);
+  L.control.attribution({ prefix: '© <a href="https://openstreetmap.org">OSM</a>' }).addTo(_lfMap);
+  _lfMap.setView([S.mapCenter.lat, S.mapCenter.lon], 17);
+}
+
+function renderLeafletMap() {
+  if (!_lfMap) return;
+  // Clear previous layers
+  _lfLayers.forEach(l => _lfMap.removeLayer(l));
+  _lfLayers = [];
+
+  const caps = S.session.captures;
+  const { altitude: alt, overlap: ov } = S.mapParams;
+  const center = S.mapCenter;
+
+  if (!caps.length) {
+    _lfMap.setView([center.lat, center.lon], 17);
+    return;
+  }
+
+  // Compute GPS positions for all captures
+  const pts = caps.map((c, i) => ({
+    ...computeGPSPos(i, center, alt, ov),
+    health: (c.healthScore || 0) / 100,
+    cap: c, idx: i
+  }));
+
+  const footprintM = alt * 28;
+  const strip = footprintM * (1 - ov / 100) || 5;
+  const halfDeg = (strip / 2) / 111320;
+
+  if (S.mapView === 'terrain') {
+    // Flight path polyline
+    const polyPts = pts.map(p => [p.lat, p.lon]);
+    const poly = L.polyline(polyPts, { color: '#234d32', weight: 1.5, dashArray: '4,4', opacity: 0.5 });
+    poly.addTo(_lfMap); _lfLayers.push(poly);
+
+    // IDW heatmap (colored rectangles)
+    const idwCells = computeIDW(pts, 14);
+    const cellHalfLat = halfDeg * 0.8, cellHalfLon = halfDeg * 0.8 / Math.cos(center.lat * Math.PI / 180);
+    idwCells.forEach(cell => {
+      const rect = L.rectangle(
+        [[cell.lat - cellHalfLat, cell.lon - cellHalfLon],
+         [cell.lat + cellHalfLat, cell.lon + cellHalfLon]],
+        { color: 'transparent', fillColor: healthToColor(cell.value),
+          fillOpacity: 0.35, weight: 0 }
+      );
+      rect.addTo(_lfMap); _lfLayers.push(rect);
+    });
+
+    // Capture markers
+    pts.forEach(p => {
+      const col = healthToColor(p.health);
+      const icon = L.divIcon({
+        className: '',
+        html: `<div style="width:22px;height:22px;border-radius:50%;background:${col};border:2.5px solid #fff;display:grid;place-items:center;font-size:9px;font-weight:800;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3)">${p.idx + 1}</div>`,
+        iconSize: [22, 22], iconAnchor: [11, 11]
+      });
+      const marker = L.marker([p.lat, p.lon], { icon });
+      marker.bindPopup(`<div class="lf-popup"><strong>Capture #${p.idx + 1}</strong><br>Santé : ${p.cap.healthScore}%<br>Indice : ${p.cap.ndvi}<br>Couleur : ${p.cap.colorName?.split('/')[0] || '—'}</div>`);
+      marker.addTo(_lfMap); _lfLayers.push(marker);
+    });
+
+  } else if (S.mapView === 'presc') {
+    // Prescription zones as polygons
+    pts.forEach(p => {
+      const halfLat = halfDeg;
+      const halfLon = halfDeg / Math.cos(center.lat * Math.PI / 180);
+      const col = healthToColor(p.health);
+      const label = p.health >= 0.6 ? 'Maintien' : p.health >= 0.35 ? 'Surveillance' : 'Intervention';
+      const rect = L.rectangle(
+        [[p.lat - halfLat, p.lon - halfLon], [p.lat + halfLat, p.lon + halfLon]],
+        { color: col, fillColor: col, fillOpacity: 0.55, weight: 1.5 }
+      );
+      rect.bindPopup(`<div class="lf-popup"><strong>${label}</strong><br>Santé : ${p.cap.healthScore}%<br>Zone #${p.idx + 1}</div>`);
+      rect.addTo(_lfMap); _lfLayers.push(rect);
+    });
+  }
+
+  // Fit map to all points
+  const allLats = pts.map(p => p.lat), allLons = pts.map(p => p.lon);
+  _lfMap.fitBounds([
+    [Math.min(...allLats) - halfDeg * 2, Math.min(...allLons) - halfDeg * 2],
+    [Math.max(...allLats) + halfDeg * 2, Math.max(...allLons) + halfDeg * 2]
+  ]);
+  _lfMap.invalidateSize();
+}
+
+function exportGeoJSON() {
+  const caps = S.session.captures;
+  if (!caps.length) { toast('Aucune capture à exporter', true); return; }
+  const { altitude: alt, overlap: ov } = S.mapParams;
+  const center = S.mapCenter;
+  const footprintM = alt * 28;
+  const strip = footprintM * (1 - ov / 100) || 5;
+  const halfDeg = (strip / 2) / 111320;
+
+  const features = caps.map((c, i) => {
+    const { lat, lon } = computeGPSPos(i, center, alt, ov);
+    const hLat = halfDeg, hLon = halfDeg / Math.cos(center.lat * Math.PI / 180);
+    return {
+      type: 'Feature',
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[[lon - hLon, lat - hLat], [lon + hLon, lat - hLat],
+                        [lon + hLon, lat + hLat], [lon - hLon, lat + hLat],
+                        [lon - hLon, lat - hLat]]]
+      },
+      properties: {
+        zone: i + 1, ts: c.ts,
+        health_pct: c.healthScore,
+        severity: c.severity,
+        index: c.selectedIndex || 'VARI',
+        index_value: c.ndvi,
+        vari: c.allIndices?.VARI ?? null,
+        exg:  c.allIndices?.ExG  ?? null,
+        grvi: c.allIndices?.GRVI ?? null,
+        gli:  c.allIndices?.GLI  ?? null,
+        tgi:  c.allIndices?.TGI  ?? null,
+        prescription: c.healthScore >= 60 ? 'maintien' : c.healthScore >= 35 ? 'surveillance' : 'intervention'
+      }
+    };
+  });
+
+  const geojson = { type: 'FeatureCollection', features };
+  const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/geo+json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `agrovision_${new Date().toISOString().slice(0,10)}.geojson`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('GeoJSON exporté ✓');
 }
 
 // ═══════════════════════════════════════
@@ -1532,7 +1816,7 @@ function go(screen) {
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + screen));
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.s === screen));
   document.getElementById('screenTitle').textContent = TITLES[screen] || screen;
-  if (screen === 'map')      { renderMap(); updateMapStats(); updateMapCalc(); }
+  if (screen === 'map')      { renderMap(); updateMapStats(); updateMapCalc(); if (S.mapView !== 'grid' && _lfMap) { _lfMap.invalidateSize(); renderLeafletMap(); } }
   if (screen === 'report')   { renderReportHistory(); syncReportUI(); }
   if (screen === 'history')  loadHistory();
   if (screen === 'missions') refreshMissionList();
@@ -1608,6 +1892,14 @@ async function init() {
     document.getElementById('mapOv').value   = S.mapParams.overlap;
     document.getElementById('mapSpd').value  = S.mapParams.speed;
     document.getElementById('mapType').value = S.mapParams.missionType;
+  }
+
+  // Restore GPS center
+  const savedCenter = LS.get('mapCenter', null);
+  if (savedCenter) {
+    S.mapCenter = savedCenter;
+    document.getElementById('gpsLat').value = savedCenter.lat;
+    document.getElementById('gpsLon').value = savedCenter.lon;
   }
 
   updateMapCalc();
