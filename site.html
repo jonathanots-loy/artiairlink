@@ -3,1223 +3,548 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Arti-AirLink — AgroVision V4</title>
+<title>Arti-AirLink — AgroVision | Diagnostic végétal par drone</title>
+<meta name="description" content="Arti-AirLink transforme un drone ordinaire en outil de diagnostic agricole. NDVI simplifié, analyse en temps réel, 11 cultures supportées. Belgique & RDC."/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f6f2e8;--bg2:#ece5d8;--surface:#fffdf8;--surface-2:#f8f4ea;--surface-3:#f0eadc;
-  --ink:#162418;--muted:#64725f;--line:#d9dece;--line-2:#c8d1bd;
-  --green:#1f4d32;--green2:#2f6b45;--green3:#4e8d65;--lime:#5faa4a;
-  --amber:#d8a25a;--warn:#a86712;--danger:#b44f42;--danger-bg:#f8e5e2;
-  --ok-bg:#e6f4e5;--ok:#2e6a2a;--warn-bg:#f8efd9;
-  --shadow:0 8px 32px rgba(31,77,50,.10);--radius:24px;
+  --bg:#f6f2e8;--bg2:#ece5d8;--surface:#fffdf8;--surface2:#f2ede0;
+  --ink:#162418;--muted:#64725f;--line:#d9dece;
+  --G1:#1f4d32;--G2:#2f6b45;--G3:#4e8d65;--G4:#8cbf6c;
+  --amber:#d8a25a;--danger:#b44f42;
+  --sh:0 8px 32px rgba(31,77,50,.09);
+  --sh2:0 20px 56px rgba(31,77,50,.13);
+  --r:22px;--r2:32px;
 }
-*{box-sizing:border-box}
-html,body{margin:0;padding:0}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
 body{
   min-height:100vh;
-  background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+  background:var(--bg);
   color:var(--ink);
   font-family:Inter,system-ui,sans-serif;
+  font-size:16px;line-height:1.65;
 }
-button,input,select,textarea{font:inherit}
 
-/* ─ TOPBAR ─ */
-.topbar{
-  position:sticky;top:0;z-index:20;
-  display:flex;justify-content:space-between;align-items:center;gap:12px;
-  padding:14px 28px;
-  background:rgba(246,242,232,.92);
-  backdrop-filter:blur(14px);
-  border-bottom:1px solid rgba(31,77,50,.10);
+/* ── NAV ── */
+nav{
+  position:sticky;top:0;z-index:50;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 32px;
+  background:rgba(246,242,232,.94);backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(31,77,50,.08);
 }
-.brand{display:flex;align-items:center;gap:14px;flex-shrink:0}
-.brand-mark{
-  width:44px;height:44px;border-radius:14px;
-  background:linear-gradient(135deg,var(--green),var(--green3));
-  display:grid;place-items:center;color:#fff;font-size:22px;
-  box-shadow:0 4px 16px rgba(31,77,50,.25);
+.nav-brand{display:flex;align-items:center;gap:12px}
+.nav-mark{
+  width:40px;height:40px;border-radius:12px;
+  background:linear-gradient(135deg,var(--G1),var(--G3));
+  display:grid;place-items:center;color:#fff;font-size:20px;
+  box-shadow:0 4px 14px rgba(31,77,50,.28);flex-shrink:0
 }
-.brand h1{margin:0;font-family:Manrope,Inter,sans-serif;font-size:18px;letter-spacing:-.03em}
-.brand p{margin:3px 0 0;color:var(--muted);font-size:11px}
-.nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.pill{
-  display:flex;align-items:center;gap:7px;
-  background:#fff;border:1px solid var(--line);border-radius:999px;
-  padding:8px 13px;font-size:12px;font-weight:600;color:var(--ink);
+.nav-title{font-family:Manrope,sans-serif;font-size:17px;font-weight:800;letter-spacing:-.03em}
+.nav-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.nav-links{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.nav-link{padding:7px 13px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;border:1px solid transparent;transition:.18s}
+.nav-link:hover{background:rgba(31,77,50,.06);color:var(--G1)}
+.nav-cta{
+  padding:8px 16px;border-radius:999px;font-size:13px;font-weight:700;
+  background:var(--G1);color:#fff;text-decoration:none;border:none;cursor:pointer;
+  transition:.18s;box-shadow:0 3px 10px rgba(31,77,50,.24)
 }
-.dot{width:9px;height:9px;border-radius:50%;background:#c0c8bc;transition:background .3s,box-shadow .3s}
-.dot.live{background:#5fcc73;box-shadow:0 0 0 4px rgba(95,204,115,.2)}
+.nav-cta:hover{background:var(--G2)}
 
-/* ─ SHELL ─ */
-.shell{padding:24px 28px;display:grid;gap:20px}
+/* ── LAYOUT ── */
+section{padding:88px 32px}
+.container{max-width:1100px;margin:0 auto}
+h2.section-title{
+  font-family:Manrope,sans-serif;font-size:36px;font-weight:900;
+  letter-spacing:-.04em;line-height:1.1;margin-bottom:14px
+}
+.section-sub{color:var(--muted);font-size:17px;max-width:600px;line-height:1.7;margin-bottom:48px}
 
-/* ─ PANEL ─ */
-.panel{background:var(--surface);border:1px solid rgba(31,77,50,.08);border-radius:32px;box-shadow:var(--shadow)}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:20px}
-.card h3{margin:0;font-family:Manrope,Inter,sans-serif;font-size:17px;letter-spacing:-.02em}
-.card h4{margin:5px 0 0;font-size:13px;color:var(--muted);font-weight:500;line-height:1.55}
-
-/* ─ HERO ─ */
-.hero{display:grid;grid-template-columns:1.3fr .7fr;gap:20px}
-.hero-main{padding:32px;background:linear-gradient(135deg,#fffdf8,#f7f1e6);border-radius:32px}
+/* ── HERO ── */
+#hero{
+  padding:96px 32px 80px;
+  background:
+    radial-gradient(700px 300px at 80% -10%,rgba(140,191,108,.15),transparent 48%),
+    radial-gradient(500px 250px at 0% 60%,rgba(31,77,50,.07),transparent 42%),
+    var(--bg);
+}
+.hero-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:center}
 .eyebrow{
   display:inline-flex;align-items:center;gap:8px;
-  background:#edf6ef;color:var(--green2);border-radius:999px;
-  padding:8px 13px;font-size:12px;font-weight:700;
+  background:#e8f3ec;color:var(--G2);border-radius:999px;
+  padding:7px 14px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  margin-bottom:22px
 }
-.hero-main h2{
-  margin:14px 0 10px;
-  font-family:Manrope,Inter,sans-serif;
-  font-size:42px;line-height:.98;letter-spacing:-.05em;max-width:700px;
+.hero-h1{
+  font-family:Manrope,sans-serif;font-size:52px;font-weight:900;
+  line-height:.98;letter-spacing:-.05em;margin-bottom:20px
 }
-.hero-main p{margin:0;max-width:680px;color:var(--muted);font-size:15px;line-height:1.72}
-.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:22px}
-.kpi{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px}
-.kpi .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.10em}
-.kpi .v{font-size:28px;font-weight:800;margin-top:6px;line-height:1.1}
-.kpi .s{font-size:11px;color:var(--muted);margin-top:5px}
-.hero-side{padding:16px;display:grid;gap:14px;align-content:start}
-
-/* ─ BUTTONS ─ */
-.btn{border:none;border-radius:14px;padding:11px 16px;font-weight:700;cursor:pointer;font-size:13px;transition:opacity .15s,transform .1s}
-.btn:active{transform:scale(.97)}
-.btn.primary{background:var(--green);color:#fff}
-.btn.primary:hover{background:var(--green2)}
-.btn.secondary{background:#edf2e7;color:var(--green)}
-.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
-.btn.danger{background:#f8e8e5;color:var(--danger)}
-.btn.warn-btn{background:#fdf3e4;color:var(--warn)}
-
-/* ─ MODE TABS ─ */
-.mode-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.tab{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:10px 14px;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s}
-.tab.active{background:var(--green);color:#fff;border-color:var(--green)}
-
-/* ─ FIELDS ─ */
-.field{display:grid;gap:8px;margin-top:14px}
-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.10em}
-input[type=text],input[type=number],select{
-  width:100%;border:1px solid var(--line);background:#fff;color:var(--ink);
-  border-radius:13px;padding:11px 13px;font-size:13px;transition:border-color .15s;
+.hero-h1 em{font-style:normal;color:var(--G2)}
+.hero-p{color:var(--muted);font-size:17px;line-height:1.72;max-width:520px;margin-bottom:32px}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn-primary{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--G1);color:#fff;border:none;border-radius:14px;
+  padding:13px 22px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;
+  text-decoration:none;box-shadow:0 4px 16px rgba(31,77,50,.28);transition:.18s
 }
-input:focus,select:focus{outline:none;border-color:var(--green3)}
-input[type=file]{font-size:13px;color:var(--muted)}
-.row{display:flex;gap:8px;flex-wrap:wrap}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.muted{color:var(--muted);font-size:12px;line-height:1.65}
-
-/* ─ ALERT / BANNER ─ */
-.banner{
-  display:flex;align-items:flex-start;gap:10px;padding:12px 14px;
-  border-radius:14px;font-size:12px;line-height:1.6;
+.btn-primary:hover{background:var(--G2);transform:translateY(-1px)}
+.btn-outline{
+  display:inline-flex;align-items:center;gap:8px;
+  background:transparent;color:var(--G1);border:2px solid var(--G1);border-radius:14px;
+  padding:11px 20px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;
+  text-decoration:none;transition:.18s
 }
-.banner.info{background:#e8f0fe;color:#1a3a8f;border:1px solid #bad0ff}
-.banner.warn{background:var(--warn-bg);color:var(--warn);border:1px solid #f0d8ab}
-.banner.ok{background:var(--ok-bg);color:var(--ok);border:1px solid #b8e0b5}
-.banner.err{background:var(--danger-bg);color:var(--danger);border:1px solid #f0b5b0}
-.banner-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.btn-outline:hover{background:rgba(31,77,50,.06)}
 
-/* ─ CONNECTION TEST ─ */
-.conn-test-row{display:flex;align-items:center;gap:10px;margin-top:10px}
-.conn-badge{
-  padding:6px 12px;border-radius:999px;font-size:11px;font-weight:700;
-  background:#f0eadc;color:var(--muted);
+.hero-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r2);
+  box-shadow:var(--sh2);overflow:hidden
 }
-.conn-badge.ok{background:var(--ok-bg);color:var(--ok)}
-.conn-badge.err{background:var(--danger-bg);color:var(--danger)}
-.conn-badge.testing{background:#fff8e0;color:#8a6300}
-
-/* ─ LIVE STAGE ─ */
-.live-stage{
-  position:relative;min-height:540px;overflow:hidden;
-  border-radius:28px;background:#0c1a0e;
-  border:1px solid rgba(255,255,255,.04);box-shadow:var(--shadow);
+.hero-card-top{
+  background:linear-gradient(135deg,var(--G1),var(--G2));
+  padding:24px;color:#fff
 }
-.overlay-grid{
-  position:absolute;inset:0;z-index:1;
-  background-image:
-    linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
-    linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
-  background-size:44px 44px;
+.hero-card-top .label{font-size:11px;opacity:.7;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.hero-card-top .val{font-family:Manrope,sans-serif;font-size:28px;font-weight:900;letter-spacing:-.03em}
+.hero-card-top .sub{font-size:13px;opacity:.75;margin-top:4px}
+.hero-card-body{padding:20px}
+.stat-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}
+.stat-row:last-child{border-bottom:none}
+.stat-label{font-size:13px;color:var(--muted)}
+.stat-val{font-size:13px;font-weight:700}
+.stat-val.good{color:var(--G2)}
+.stat-val.warn{color:var(--amber)}
+.stat-val.bad{color:var(--danger)}
+
+/* ── PROBLÈME ── */
+#problem{background:var(--surface)}
+.problem-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.problem-card{
+  background:var(--bg);border:1px solid var(--line);border-radius:var(--r);
+  padding:24px
 }
-.stage-top{
-  position:absolute;top:16px;left:16px;right:16px;z-index:4;
-  display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;
+.problem-icon{font-size:32px;margin-bottom:14px}
+.problem-card h3{font-family:Manrope,sans-serif;font-size:17px;font-weight:800;margin-bottom:8px;letter-spacing:-.02em}
+.problem-card p{font-size:14px;color:var(--muted);line-height:1.7}
+
+/* ── SOLUTION ── */
+#solution{background:var(--bg2)}
+.solution-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.feature-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:24px;box-shadow:var(--sh)
 }
-.stage-pill{
-  background:rgba(12,26,14,.82);color:#e4f0e6;
-  border:1px solid rgba(255,255,255,.10);border-radius:999px;
-  padding:9px 14px;font-size:12px;font-weight:700;backdrop-filter:blur(8px);
+.feature-icon{
+  width:44px;height:44px;border-radius:12px;
+  background:linear-gradient(135deg,var(--G1),var(--G3));
+  display:grid;place-items:center;font-size:20px;margin-bottom:14px
 }
-#video,#remoteImage{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
-#video.visible,#remoteImage.visible{display:block}
-#canvas{position:absolute;inset:0;width:100%;height:100%;z-index:2}
-
-/* Focus reticle — moved dynamically by zone */
-.focus-box{
-  position:absolute;z-index:3;border:2px solid rgba(255,255,255,.60);border-radius:18px;
-  box-shadow:0 0 0 1px rgba(31,77,50,.4) inset;pointer-events:none;transition:all .3s;
+.feature-card h3{font-family:Manrope,sans-serif;font-size:16px;font-weight:800;margin-bottom:6px}
+.feature-card p{font-size:14px;color:var(--muted);line-height:1.65}
+.feature-card .tag{
+  display:inline-block;margin-top:10px;padding:4px 10px;border-radius:999px;
+  background:#e8f3ec;color:var(--G2);font-size:11px;font-weight:700
 }
-.focus-box::before,.focus-box::after{content:"";position:absolute;background:rgba(255,255,255,.75)}
-.focus-box::before{width:24px;height:2px;left:50%;top:50%;transform:translate(-50%,-50%)}
-.focus-box::after{width:2px;height:24px;left:50%;top:50%;transform:translate(-50%,-50%)}
 
-.stage-bottom{
-  position:absolute;left:16px;right:16px;bottom:16px;z-index:4;
-  display:grid;grid-template-columns:repeat(5,1fr);gap:8px;
+/* ── CULTURES ── */
+#cultures{background:var(--surface)}
+.crops-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.crop-chip{
+  background:var(--bg);border:1px solid var(--line);border-radius:14px;
+  padding:16px;text-align:center
 }
-.hud{
-  background:rgba(12,26,14,.82);color:#e7f3e9;
-  border:1px solid rgba(255,255,255,.10);border-radius:16px;
-  padding:12px 14px;backdrop-filter:blur(10px);
+.crop-chip .ce{font-size:28px;margin-bottom:6px}
+.crop-chip .cn{font-size:13px;font-weight:700}
+.crop-chip .ct{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* ── MARCHÉ ── */
+#market{background:var(--G1);color:#fff}
+#market .section-title{color:#fff}
+#market .section-sub{color:rgba(255,255,255,.65);margin-bottom:40px}
+.market-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.market-card{
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);
+  border-radius:var(--r);padding:28px
 }
-.hud .k{font-size:10px;color:#a7c0ab;letter-spacing:.08em;text-transform:uppercase}
-.hud .v{font-size:22px;font-weight:800;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hud .s{font-size:11px;color:#bed0c1;margin-top:4px}
+.market-num{font-family:Manrope,sans-serif;font-size:40px;font-weight:900;letter-spacing:-.04em;color:var(--G4)}
+.market-label{font-size:14px;opacity:.8;margin-top:6px;line-height:1.5}
 
-/* ─ MAIN 3-col ─ */
-.main{display:grid;grid-template-columns:300px 1fr 360px;gap:20px;align-items:start}
-.stack{display:grid;gap:16px}
-
-/* ─ TABLES ─ */
-.table{margin-top:12px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff}
-.table table{width:100%;border-collapse:collapse}
-.table th,.table td{padding:10px 13px;text-align:left;border-bottom:1px solid #ecefe7;font-size:12px;vertical-align:top}
-.table th{background:#f8faf5;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.10em;font-weight:700}
-.table tr:last-child td{border-bottom:none}
-.table code{font-size:11px;background:#f3f5f0;padding:2px 6px;border-radius:5px;font-family:monospace}
-
-/* ─ BADGE ─ */
-.badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 11px;font-size:11px;font-weight:700}
-.badge.ok{background:var(--ok-bg);color:var(--ok)}
-.badge.warn{background:var(--warn-bg);color:var(--warn)}
-.badge.bad{background:var(--danger-bg);color:var(--danger)}
-
-/* ─ RECO ─ */
-.reco{display:grid;gap:10px;margin-top:12px}
-.reco .item{background:var(--surface-2);border:1px solid var(--line);border-radius:16px;padding:13px}
-.reco .item .t{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.10em;font-weight:700}
-.reco .item .v{font-size:15px;font-weight:700;margin-top:6px;line-height:1.45}
-
-/* ─ ZONE GRID ─ */
-.zone-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
-.zone{
-  background:#fff;border:1px solid var(--line);border-radius:13px;
-  padding:10px;text-align:center;font-weight:700;font-size:12px;cursor:pointer;transition:all .15s;
+/* ── ROADMAP ── */
+#roadmap{background:var(--bg)}
+.roadmap-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative}
+.roadmap-steps::before{
+  content:'';position:absolute;top:28px;left:10%;right:10%;
+  height:2px;background:linear-gradient(90deg,var(--G4),var(--G1));
+  z-index:0
 }
-.zone.active{background:var(--green);border-color:var(--green);color:#fff}
-
-/* ─ MAP ─ */
-.map-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
-.map-cell{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px}
-.map-cell .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.10em;font-weight:700}
-.map-cell .v{font-size:20px;font-weight:800;margin-top:4px}
-.map-cell .s{font-size:11px;color:var(--muted);margin-top:4px}
-.map-preview{
-  margin-top:12px;height:200px;border-radius:18px;overflow:hidden;position:relative;
-  border:1px solid var(--line);
-  background:linear-gradient(135deg,#eff5e8,#e8efdf);
+.roadmap-step{position:relative;z-index:1;text-align:center;padding:0 12px}
+.step-bubble{
+  width:56px;height:56px;border-radius:50%;margin:0 auto 14px;
+  display:grid;place-items:center;font-size:22px;
+  border:3px solid var(--G4);background:var(--surface);
+  box-shadow:0 4px 16px rgba(31,77,50,.14)
 }
-.plot{position:absolute;border:1px solid rgba(31,77,50,.18);background:rgba(255,255,255,.4);backdrop-filter:blur(3px)}
-.flight-line{position:absolute;height:2px;background:rgba(31,77,50,.55);transform-origin:left center}
-.legend{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:12px}
-.legend .chip{border-radius:999px;padding:7px 8px;text-align:center;font-size:11px;font-weight:700}
-.legend .chip:nth-child(1){background:#f9e0db;color:#8c2f21}
-.legend .chip:nth-child(2){background:#f8eddc;color:#8a5a18}
-.legend .chip:nth-child(3){background:#f3efcf;color:#6d6213}
-.legend .chip:nth-child(4){background:#e4f1db;color:#45652d}
-.legend .chip:nth-child(5){background:#d5ecd4;color:#1d5c2b}
-
-/* ─ SUMMARY ─ */
-.summary{background:var(--surface-2);border:1px solid var(--line);border-radius:16px;padding:13px;margin-top:10px}
-.summary .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.10em;font-weight:700}
-.summary .v{font-size:17px;font-weight:800;margin-top:5px;line-height:1.35}
-.summary .d{font-size:13px;color:var(--muted);line-height:1.65;margin-top:7px}
-
-/* ─ MODAL ─ */
-.modal-bg{
-  display:none;position:fixed;inset:0;z-index:100;
-  background:rgba(22,36,24,.55);backdrop-filter:blur(6px);
-  align-items:center;justify-content:center;padding:24px;
+.step-bubble.done{background:var(--G1);border-color:var(--G1)}
+.step-bubble.active{background:var(--G2);border-color:var(--G2)}
+.roadmap-step h4{font-family:Manrope,sans-serif;font-size:14px;font-weight:800;margin-bottom:4px}
+.roadmap-step p{font-size:12px;color:var(--muted);line-height:1.55}
+.step-tag{
+  display:inline-block;margin-top:8px;padding:3px 9px;border-radius:999px;
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em
 }
-.modal-bg.show{display:flex}
-.modal{
-  background:var(--surface);border:1px solid var(--line);border-radius:28px;
-  width:100%;max-width:560px;max-height:80vh;overflow-y:auto;
-  box-shadow:0 24px 60px rgba(22,36,24,.25);padding:28px;
-}
-.modal h3{margin:0 0 4px;font-family:Manrope,Inter,sans-serif;font-size:20px;letter-spacing:-.03em}
-.modal p{margin:0 0 16px;color:var(--muted);font-size:13px}
-#reportContent{
-  white-space:pre-wrap;font-family:monospace;font-size:12px;
-  background:var(--surface-2);border:1px solid var(--line);border-radius:14px;
-  padding:16px;max-height:40vh;overflow-y:auto;line-height:1.8;color:var(--ink);
-}
-.modal-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.step-tag.done{background:#e8f3ec;color:var(--G2)}
+.step-tag.active{background:#fff3e0;color:#a86712}
+.step-tag.next{background:#f0eadc;color:var(--muted)}
 
-/* ─ FOOTER ─ */
-.footer{padding:0 28px 28px;color:var(--muted);font-size:12px;line-height:1.7}
+/* ── ÉQUIPE ── */
+#team{background:var(--surface)}
+.team-inner{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.team-text h2{font-family:Manrope,sans-serif;font-size:34px;font-weight:900;letter-spacing:-.04em;margin-bottom:14px}
+.team-text p{color:var(--muted);font-size:16px;line-height:1.75;margin-bottom:18px}
+.team-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:#e8f3ec;color:var(--G2);border-radius:999px;
+  padding:8px 16px;font-size:13px;font-weight:700;margin-right:6px;margin-bottom:6px
+}
+.team-cards{display:grid;gap:14px}
+.team-card{
+  background:var(--bg);border:1px solid var(--line);border-radius:var(--r);
+  padding:20px;display:flex;align-items:center;gap:16px
+}
+.team-avatar{
+  width:48px;height:48px;border-radius:50%;
+  background:linear-gradient(135deg,var(--G1),var(--G3));
+  display:grid;place-items:center;color:#fff;font-size:20px;flex-shrink:0
+}
+.team-card h4{font-family:Manrope,sans-serif;font-size:15px;font-weight:800;margin-bottom:2px}
+.team-card p{font-size:13px;color:var(--muted)}
 
-/* ─ RESPONSIVE ─ */
-@media(max-width:1280px){.main{grid-template-columns:1fr}.hero{grid-template-columns:1fr}}
-@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.stage-bottom{grid-template-columns:repeat(2,1fr)}.map-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:640px){.shell{padding:14px}.topbar{padding:12px 14px}.hero-main h2{font-size:30px}.kpis,.map-grid,.legend{grid-template-columns:1fr}.stage-bottom{grid-template-columns:1fr}.grid-2{grid-template-columns:1fr}}
+/* ── CONTACT / CTA ── */
+#contact{
+  background:linear-gradient(135deg,var(--G1) 0%,var(--G2) 100%);
+  color:#fff;text-align:center
+}
+#contact h2{font-family:Manrope,sans-serif;font-size:40px;font-weight:900;letter-spacing:-.05em;margin-bottom:16px}
+#contact p{color:rgba(255,255,255,.72);font-size:17px;max-width:560px;margin:0 auto 36px;line-height:1.7}
+.contact-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.btn-white{
+  display:inline-flex;align-items:center;gap:8px;
+  background:#fff;color:var(--G1);border:none;border-radius:14px;
+  padding:13px 22px;font:inherit;font-size:14px;font-weight:700;
+  cursor:pointer;text-decoration:none;box-shadow:0 4px 16px rgba(0,0,0,.15);transition:.18s
+}
+.btn-white:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(0,0,0,.2)}
+.btn-ghost-white{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.12);color:#fff;border:2px solid rgba(255,255,255,.35);
+  border-radius:14px;padding:11px 20px;font:inherit;font-size:14px;font-weight:700;
+  cursor:pointer;text-decoration:none;transition:.18s
+}
+.btn-ghost-white:hover{background:rgba(255,255,255,.2)}
+
+/* ── FOOTER ── */
+footer{
+  background:var(--ink);color:rgba(255,255,255,.5);
+  text-align:center;padding:28px 32px;font-size:13px
+}
+footer a{color:rgba(255,255,255,.6);text-decoration:none}
+footer a:hover{color:#fff}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  nav{padding:12px 16px}
+  .nav-links{display:none}
+  section{padding:60px 16px}
+  #hero{padding:64px 16px 52px}
+  .hero-inner{grid-template-columns:1fr;gap:32px}
+  .hero-h1{font-size:36px}
+  .problem-grid,.solution-grid,.market-grid{grid-template-columns:1fr}
+  .crops-grid{grid-template-columns:repeat(2,1fr)}
+  .roadmap-steps{grid-template-columns:1fr 1fr;gap:20px}
+  .roadmap-steps::before{display:none}
+  .team-inner{grid-template-columns:1fr}
+  h2.section-title{font-size:28px}
+  #contact h2{font-size:30px}
+}
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="brand">
-    <div class="brand-mark">🌿</div>
+<!-- ── NAV ── -->
+<nav>
+  <div class="nav-brand">
+    <div class="nav-mark">🌿</div>
     <div>
-      <h1>Arti-AirLink — AgroVision</h1>
-      <p>Inspection · Cartographie drone · Analyse végétale</p>
+      <div class="nav-title">Arti-AirLink</div>
+      <div class="nav-sub">AgroVision — Belgique &amp; RDC</div>
     </div>
   </div>
-  <div class="nav">
-    <div class="pill"><span class="dot" id="liveDot"></span><span id="statusText">Système prêt</span></div>
-    <div class="pill">Mode : <strong id="modeLabel">Inspection</strong></div>
-    <div class="pill">Source : <strong id="sourceLabel">Aucune</strong></div>
+  <div class="nav-links">
+    <a href="#problem" class="nav-link">Problème</a>
+    <a href="#solution" class="nav-link">Solution</a>
+    <a href="#cultures" class="nav-link">Cultures</a>
+    <a href="#market" class="nav-link">Marché</a>
+    <a href="#team" class="nav-link">Équipe</a>
+    <a href="#contact" class="nav-cta">Nous contacter</a>
   </div>
-</div>
+</nav>
 
-<div class="shell">
-
-  <!-- HERO -->
-  <section class="hero">
-    <div class="panel hero-main">
-      <span class="eyebrow">🌱 Arti-AirLink — Diagnostic terrain, Europe &amp; Congo</span>
-      <h2>Un cockpit agronomique qui transforme la caméra drone en diagnostic exploitable.</h2>
-      <p>Détection de végétation, NDVI simplifié, niveau de stress et recommandation opérateur — en temps réel depuis un drone, un iPhone ou une caméra IP sur le même réseau Wi‑Fi.</p>
+<!-- ── HERO ── -->
+<section id="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="eyebrow">🚁 Startup Drone Agricole · Belgique &amp; Congo</div>
+      <h1 class="hero-h1">Le diagnostic végétal,<br><em>accessible depuis un drone.</em></h1>
+      <p class="hero-p">Arti-AirLink transforme n'importe quel drone avec caméra en outil de diagnostic agricole en temps réel. Analyse de santé des cultures, détection de stress et recommandations terrain — sans infrastructure coûteuse.</p>
       <div class="hero-actions">
-        <button class="btn primary" id="ctaLocal">Activer la caméra</button>
-        <button class="btn secondary" id="ctaCapture">Capturer une lecture</button>
-        <button class="btn ghost" id="ctaReport">Voir le rapport</button>
-      </div>
-      <div class="kpis">
-        <div class="kpi"><div class="k">État global</div><div class="v" id="heroState">—</div><div class="s">Diagnostic simplifié</div></div>
-        <div class="kpi"><div class="k">Santé estimée</div><div class="v" id="heroHealth">—</div><div class="s">Score sur 100</div></div>
-        <div class="kpi"><div class="k">Couverture</div><div class="v" id="heroCoverage">0%</div><div class="s">Captures enregistrées</div></div>
-        <div class="kpi"><div class="k">NDVI</div><div class="v" id="heroNdvi">—</div><div class="s">Indice végétation</div></div>
+        <a href="app.html" class="btn-primary">🌱 Essayer l'app</a>
+        <a href="#contact" class="btn-outline">Nous contacter</a>
       </div>
     </div>
-
-    <div class="hero-side">
-      <div class="card">
-        <h3>Modes de travail</h3>
-        <h4>Inspection rapide, cartographie drone, ou connexion réseau Wi‑Fi.</h4>
-        <div class="mode-tabs">
-          <button class="tab active" data-mode="inspection">Inspection</button>
-          <button class="tab" data-mode="mapping">Cartographie</button>
-          <button class="tab" data-mode="connect">Wi‑Fi / Drone</button>
-        </div>
-        <p class="muted" style="margin-top:10px">
-          <strong>Inspection</strong> : lecture ponctuelle d'une culture ou zone.<br>
-          <strong>Cartographie</strong> : suivi couverture mission drone.<br>
-          <strong>Wi‑Fi / Drone</strong> : connexion à un flux réseau local.
-        </p>
+    <div class="hero-card">
+      <div class="hero-card-top">
+        <div class="label">Rapport terrain — Exemple</div>
+        <div class="val">Maïs · 78% santé</div>
+        <div class="sub">Stress léger détecté · VARI 0.142</div>
       </div>
-      <div class="card">
-        <h3>Lecture instantanée</h3>
-        <h4>Reformulation lisible du signal caméra.</h4>
-        <div class="summary">
-          <div class="k">Synthèse</div>
-          <div class="v" id="summaryMain">Aucune donnée active</div>
-          <div class="d" id="summaryText">Active une source pour démarrer.</div>
+      <div class="hero-card-body">
+        <div class="stat-row">
+          <span class="stat-label">État végétal</span>
+          <span class="stat-val good">Correct</span>
         </div>
-        <div class="summary">
-          <div class="k">Action recommandée</div>
-          <div class="v" id="summaryAction">—</div>
-          <div class="d" id="summaryActionText">Le moteur de décision indiquera l'action ici.</div>
+        <div class="stat-row">
+          <span class="stat-label">Niveau de stress</span>
+          <span class="stat-val warn">Faible à modéré</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Indice VARI</span>
+          <span class="stat-val">0.142</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Confiance signal</span>
+          <span class="stat-val">82%</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Recommandation</span>
+          <span class="stat-val" style="font-size:12px;max-width:180px;text-align:right">Vérifier irrigation et apport azoté</span>
         </div>
       </div>
-      <div class="card">
-        <div class="k">Référentiel état végétal</div>
-        <div class="legend" style="margin-top:10px">
-          <div class="chip">Critique</div>
-          <div class="chip">Stress</div>
-          <div class="chip">À surveiller</div>
-          <div class="chip">Correct</div>
-          <div class="chip">Excellent</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- MAIN 3-col -->
-  <section class="main">
-
-    <!-- LEFT COL -->
-    <div class="stack">
-
-      <!-- SOURCE CONNECTION -->
-      <div class="card">
-        <h3>Sources de flux</h3>
-        <h4>Caméra locale, iPhone, drone ou fichier.</h4>
-
-        <!-- Protocol warning (shown if HTTPS) -->
-        <div id="httpsWarning" class="banner warn" style="display:none;margin-top:12px">
-          <span class="banner-icon">⚠️</span>
-          <span>Page servie en <strong>HTTPS</strong> — les flux HTTP locaux (iPhone, caméra IP) seront bloqués par le navigateur. <strong>Ouvre ce fichier directement</strong> (double-clic) ou depuis <code>http://localhost</code>.</span>
-        </div>
-
-        <div class="field">
-          <label>Caméra locale (webcam / téléphone USB)</label>
-          <div class="row">
-            <button class="btn primary" id="btnLocal">Activer la caméra</button>
-            <button class="btn ghost" id="btnStop">Couper source</button>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Connexion iPhone / Drone / Caméra IP</label>
-          <div class="banner info" style="margin-bottom:10px">
-            <span class="banner-icon">📱</span>
-            <div>
-              <strong>Application recommandée pour iPhone :</strong> <em>IP Camera Lite</em> (gratuite, App Store).<br>
-              Lance l'app → note l'adresse affichée (ex. <code>http://192.168.1.15:8080</code>) → colle ci-dessous.
-              L'iPhone et ce PC doivent être sur le <strong>même Wi‑Fi</strong>.
-            </div>
-          </div>
-          <div class="grid-2">
-            <div>
-              <label>Adresse de base</label>
-              <input type="text" id="iphoneBaseUrl" placeholder="http://192.168.1.15:8080">
-            </div>
-            <div>
-              <label>Type de flux</label>
-              <select id="iphoneEndpoint">
-                <option value="shot">/shot.jpg — Snapshot JPEG (défaut)</option>
-                <option value="video">/video — Flux MJPEG direct</option>
-                <option value="mjpeg">/mjpeg — Flux MJPEG alternatif</option>
-                <option value="live">/live — Flux live (certaines apps)</option>
-                <option value="custom">URL complète personnalisée</option>
-              </select>
-            </div>
-          </div>
-          <input type="text" id="customEndpointUrl" placeholder="URL complète si 'Personnalisée'" style="display:none;margin-top:8px">
-
-          <div class="conn-test-row">
-            <button class="btn secondary" id="btnIphoneQuick">▶ Connecter</button>
-            <button class="btn ghost" id="btnConnTest">🔍 Tester</button>
-            <span class="conn-badge" id="connBadge">Non testé</span>
-          </div>
-
-          <div id="connError" class="banner err" style="display:none;margin-top:10px">
-            <span class="banner-icon">❌</span>
-            <span id="connErrorMsg">Erreur de connexion.</span>
-          </div>
-          <div id="connOk" class="banner ok" style="display:none;margin-top:10px">
-            <span class="banner-icon">✅</span>
-            <span>Connexion établie avec succès — flux actif.</span>
-          </div>
-
-          <div class="table" style="margin-top:10px">
-            <table>
-              <thead><tr><th>Application iPhone</th><th>Endpoint à utiliser</th></tr></thead>
-              <tbody>
-                <tr><td>IP Camera Lite</td><td><code>/shot.jpg</code> ou <code>/video</code></td></tr>
-                <tr><td>IP Webcam (Android)</td><td><code>/shot.jpg</code> ou <code>/video</code></td></tr>
-                <tr><td>EpocCam</td><td><code>/mjpeg</code> ou <code>/live</code></td></tr>
-                <tr><td>Caméra IP générique</td><td>Voir doc. appareil</td></tr>
-                <tr><td>Drone avec caméra IP</td><td>URL fournie par l'app drone</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Import fichier (image ou vidéo drone)</label>
-          <input type="file" id="fileInput" accept="image/*,video/*">
-          <div class="muted">Pour rejouer un enregistrement terrain ou une capture drone.</div>
-        </div>
-      </div>
-
-      <!-- ZONE -->
-      <div class="card">
-        <h3>Zone d'analyse</h3>
-        <h4>Portion de l'image analysée pour le NDVI et la santé.</h4>
-        <div class="zone-grid">
-          <div class="zone active" data-zone="center">Centre</div>
-          <div class="zone" data-zone="top">Haut</div>
-          <div class="zone" data-zone="bottom">Bas</div>
-          <div class="zone" data-zone="left">Gauche</div>
-          <div class="zone" data-zone="right">Droite</div>
-          <div class="zone" data-zone="full">Plein cadre</div>
-        </div>
-      </div>
-
-      <!-- MISSION PARAMS -->
-      <div class="card">
-        <h3>Paramètres mission drone</h3>
-        <h4>Configurés pour le mode cartographie.</h4>
-        <div class="grid-2" style="margin-top:14px">
-          <div class="field" style="margin-top:0"><label>Altitude (m)</label><input type="number" id="altitudeInput" value="30" min="5" max="400"></div>
-          <div class="field" style="margin-top:0"><label>Recouvrement (%)</label><input type="number" id="overlapInput" value="75" min="30" max="95"></div>
-          <div class="field" style="margin-top:0"><label>Vitesse (m/s)</label><input type="number" id="speedInput" value="4" min="1" max="15"></div>
-          <div class="field" style="margin-top:0">
-            <label>Type mission</label>
-            <select id="missionType">
-              <option>Lawnmower</option>
-              <option>Orbital</option>
-              <option>Scan ciblé</option>
-            </select>
-          </div>
-        </div>
-        <div class="muted" style="margin-top:8px" id="missionCalc">Surface estimée : — ha</div>
-      </div>
-    </div>
-
-    <!-- CENTER — LIVE STAGE -->
-    <div class="live-stage">
-      <div class="overlay-grid"></div>
-      <div class="stage-top">
-        <div class="stage-pill">Mode <strong id="stageMode">Inspection</strong></div>
-        <div class="stage-pill">Source <strong id="stageSource">Aucune</strong></div>
-        <div class="stage-pill">Zone <strong id="stageZone">Centre</strong></div>
-      </div>
-
-      <img id="remoteImage" alt="Flux distant" crossorigin="anonymous">
-      <video id="video" autoplay playsinline muted></video>
-      <canvas id="canvas"></canvas>
-      <div class="focus-box" id="focusBox"></div>
-
-      <div class="stage-bottom">
-        <div class="hud"><div class="k">Couleur dominante</div><div class="v" id="hudColor">—</div><div class="s" id="hudHex">#—</div></div>
-        <div class="hud"><div class="k">NDVI simplifié</div><div class="v" id="hudNdviLive">—</div><div class="s">(G−R)/(G+R)</div></div>
-        <div class="hud"><div class="k">Santé végétale</div><div class="v" id="hudHealth">—</div><div class="s" id="hudState">En attente</div></div>
-        <div class="hud"><div class="k">Confiance</div><div class="v" id="hudConfidence">—</div><div class="s">Contraste signal</div></div>
-        <div class="hud"><div class="k">Luminosité</div><div class="v" id="hudLumi">—</div><div class="s">Niveau 0–255</div></div>
-      </div>
-    </div>
-
-    <!-- RIGHT COL -->
-    <div class="stack">
-
-      <!-- RAPPORT INTERPRÉTÉ -->
-      <div class="card">
-        <h3>Rapport interprété</h3>
-        <h4>Diagnostic lisible — agriculteur, technicien ou client.</h4>
-        <div class="table">
-          <table>
-            <tbody>
-              <tr><th>État global</th><td id="reportState">En attente</td></tr>
-              <tr><th>Niveau de stress</th><td id="reportStress">—</td></tr>
-              <tr><th>Zone analysée</th><td id="reportZone">—</td></tr>
-              <tr><th>Action prioritaire</th><td id="reportAction">—</td></tr>
-              <tr><th>Mode mission</th><td id="reportMode">Inspection</td></tr>
-              <tr><th>Source active</th><td id="reportSource">Aucune</td></tr>
-              <tr><th>Confiance signal</th><td id="reportConfidence">—</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="reco">
-          <div class="item"><div class="t">Diagnostic immédiat</div><div class="v" id="diagImmediate">Aucune lecture disponible.</div></div>
-          <div class="item"><div class="t">Conseil opérateur</div><div class="v" id="diagOperator">Active une caméra ou connecte un flux pour démarrer.</div></div>
-        </div>
-        <div class="row" style="margin-top:14px">
-          <button class="btn secondary" id="btnCapture">📍 Capturer</button>
-          <button class="btn ghost" id="btnReport">📋 Rapport</button>
-          <button class="btn danger" id="btnReset">↺ Réinitialiser</button>
-        </div>
-      </div>
-
-      <!-- MODULE CARTOGRAPHIE -->
-      <div class="card">
-        <h3>Module cartographie</h3>
-        <h4>Suivi de mission drone simplifié.</h4>
-        <div class="map-grid">
-          <div class="map-cell"><div class="k">Mission</div><div class="v" id="mapMission">—</div><div class="s">Type sélectionné</div></div>
-          <div class="map-cell"><div class="k">Altitude</div><div class="v" id="mapAltitude">—</div><div class="s">Paramètre drone</div></div>
-          <div class="map-cell"><div class="k">Recouvrement</div><div class="v" id="mapOverlap">—</div><div class="s">Long. + lat.</div></div>
-          <div class="map-cell"><div class="k">Vitesse</div><div class="v" id="mapSpeed">—</div><div class="s">m/s mission</div></div>
-          <div class="map-cell"><div class="k">Captures</div><div class="v" id="mapFrames">0</div><div class="s">Lectures enregistrées</div></div>
-          <div class="map-cell"><div class="k">Couverture</div><div class="v" id="mapCoverage">0%</div><div class="s">Sessions captures</div></div>
-        </div>
-        <div class="map-preview">
-          <div class="plot" style="left:8%;top:11%;width:24%;height:26%"></div>
-          <div class="plot" style="left:37%;top:12%;width:25%;height:25%"></div>
-          <div class="plot" style="left:66%;top:10%;width:24%;height:28%"></div>
-          <div class="plot" style="left:10%;top:46%;width:34%;height:32%"></div>
-          <div class="plot" style="left:48%;top:46%;width:38%;height:34%"></div>
-          <div class="flight-line" style="left:8%;top:18%;width:82%"></div>
-          <div class="flight-line" style="left:8%;top:30%;width:82%"></div>
-          <div class="flight-line" style="left:8%;top:42%;width:82%"></div>
-          <div class="flight-line" style="left:8%;top:54%;width:82%"></div>
-          <div class="flight-line" style="left:8%;top:66%;width:82%"></div>
-        </div>
-        <div class="legend">
-          <div class="chip">Critique</div><div class="chip">Stress</div>
-          <div class="chip">Moyen</div><div class="chip">Bon</div><div class="chip">Excellent</div>
-        </div>
-      </div>
-
-      <!-- HISTORIQUE -->
-      <div class="card">
-        <h3>Historique &amp; journal</h3>
-        <h4>Traçabilité des lectures et événements.</h4>
-        <div class="table">
-          <table>
-            <thead><tr><th>Heure</th><th>Lecture</th><th>NDVI</th><th>État</th></tr></thead>
-            <tbody id="historyBody"><tr><td colspan="4" style="color:var(--muted)">Aucune lecture.</td></tr></tbody>
-          </table>
-        </div>
-        <div class="table" style="margin-top:10px">
-          <table>
-            <thead><tr><th>Heure</th><th>Événement</th></tr></thead>
-            <tbody id="logBody"><tr><td colspan="2" style="color:var(--muted)">Journal prêt.</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-  </section>
-</div>
-
-<div class="footer">
-  AgroVision V4 — Arti-AirLink · Analyse végétale drone · Belgique &amp; Congo · Équipe Arti, Section Drone &amp; Innovation
-</div>
-
-<!-- REPORT MODAL -->
-<div class="modal-bg" id="modalBg">
-  <div class="modal">
-    <h3>Rapport de session</h3>
-    <p id="modalDate">—</p>
-    <pre id="reportContent">Aucune donnée.</pre>
-    <div class="modal-actions">
-      <button class="btn primary" onclick="downloadReport()">⬇ Télécharger .txt</button>
-      <button class="btn ghost" onclick="closeModal()">Fermer</button>
     </div>
   </div>
-</div>
+</section>
 
-<script>
-// ─── STATE ─────────────────────────────────────────────────────────────────
-const S = {
-  mode: 'inspection',
-  zone: 'center',
-  source: 'Aucune',
-  localStream: null,
-  remoteTimer: null,
-  remoteType: 'shot',   // 'shot' | 'mjpeg'
-  loopRunning: false,   // FIX: prevent duplicate render loops
-  coverage: 0,
-  captures: 0,
-  history: [],
-  logLines: [],
-  lastReport: '',
-};
+<!-- ── PROBLÈME ── -->
+<section id="problem">
+  <div class="container">
+    <h2 class="section-title">Un problème réel, à grande échelle.</h2>
+    <p class="section-sub">Les agriculteurs d'Afrique subsaharienne et d'Europe de l'Est n'ont pas accès aux outils de diagnostic végétal professionnels — trop chers, trop complexes, trop lents.</p>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-icon">💸</div>
+        <h3>Coût prohibitif</h3>
+        <p>Les drones agronomiques professionnels (DJI Agras, senseFly) coûtent entre 15 000 et 80 000 €. Hors de portée pour la majorité des exploitants.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">⏱️</div>
+        <h3>Diagnostic trop tardif</h3>
+        <p>Sans surveillance régulière, les maladies et stress hydriques sont détectés visuellement — souvent quand la perte de rendement est déjà significative.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">🌍</div>
+        <h3>Marché sous-équipé</h3>
+        <p>En RDC et en Afrique centrale, moins de 2% des exploitations utilisent un outil numérique de suivi de culture. Le marché est presque entièrement vierge.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
-const $ = id => document.getElementById(id);
-const video = $('video');
-const remoteImage = $('remoteImage');
-const canvas = $('canvas');
-const ctx = canvas.getContext('2d', { willReadFrequently: true });
+<!-- ── SOLUTION ── -->
+<section id="solution">
+  <div class="container">
+    <h2 class="section-title">Notre solution : AgroVision.</h2>
+    <p class="section-sub">Une application mobile PWA qui transforme la caméra d'un drone jouet ou d'un smartphone en outil d'analyse végétale — sans hardware propriétaire, sans abonnement cloud.</p>
+    <div class="solution-grid">
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Analyse VARI en temps réel</h3>
+        <p>Calcul du Visible Atmospherically Resistant Index (Gitelson, 2002) à partir de la caméra RGB. Corrélé à la chlorophylle et au stress hydrique sans capteur infrarouge.</p>
+        <span class="tag">Caméra standard suffisante</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌽</div>
+        <h3>11 cultures supportées</h3>
+        <p>Profils spécifiques pour maïs, manioc, blé, riz, soja, café, coton, tomate, banane et agrumes. Seuils de santé, maladies communes et recommandations adaptés à chaque culture.</p>
+        <span class="tag">Recommandations spécifiques</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🍅</div>
+        <h3>Analyse fruit + plante</h3>
+        <p>Pour les cultures à fruits colorés (tomate, banane, agrumes), l'app distingue automatiquement la plante du fruit et adapte l'analyse : VARI pour les feuilles, teinte colorimétrique pour les fruits.</p>
+        <span class="tag">Détection de maturité</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📱</div>
+        <h3>PWA installable, fonctionne hors ligne</h3>
+        <p>Application Progressive Web App installable directement sur Android et iPhone. Fonctionne sans connexion une fois chargée. Données persistantes via IndexedDB.</p>
+        <span class="tag">Pas d'app store requis</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🗺️</div>
+        <h3>Cartographie de mission</h3>
+        <p>Chaque capture est positionnée sur une grille de vol en trajectoire lawnmower. Visualisation de la santé par zone et calcul du taux de couverture de la parcelle.</p>
+        <span class="tag">Missions terrain</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📋</div>
+        <h3>Rapports exportables</h3>
+        <p>Export des rapports en format texte et CSV à la fin de chaque mission. Historique complet des captures avec horodatage, indice VARI, santé et recommandation opérateur.</p>
+        <span class="tag">CSV + TXT</span>
+      </div>
+    </div>
+  </div>
+</section>
 
-// ─── HTTPS WARNING ─────────────────────────────────────────────────────────
-// FIX: warn user if served over HTTPS — HTTP camera streams will be blocked
-if (location.protocol === 'https:') {
-  $('httpsWarning').style.display = 'flex';
-}
+<!-- ── CULTURES ── -->
+<section id="cultures">
+  <div class="container">
+    <h2 class="section-title">11 cultures, des profils scientifiques.</h2>
+    <p class="section-sub">Chaque culture a ses propres seuils de santé, ses maladies à surveiller et ses recommandations — basés sur les standards FAO, CIMMYT, IITA et IRRI.</p>
+    <div class="crops-grid">
+      <div class="crop-chip"><div class="ce">🌽</div><div class="cn">Maïs</div><div class="ct">VARI · Helminthosporiose</div></div>
+      <div class="crop-chip"><div class="ce">🌿</div><div class="cn">Manioc</div><div class="ct">VARI · Mosaïque africaine</div></div>
+      <div class="crop-chip"><div class="ce">🌾</div><div class="cn">Blé</div><div class="ct">VARI · Fusariose</div></div>
+      <div class="crop-chip"><div class="ce">🌾</div><div class="cn">Riz</div><div class="ct">VARI · Blast/Pyriculariose</div></div>
+      <div class="crop-chip"><div class="ce">🫘</div><div class="cn">Soja</div><div class="ct">VARI · Sclérotiniose</div></div>
+      <div class="crop-chip"><div class="ce">☕</div><div class="cn">Café</div><div class="ct">VARI · Rouille orangée</div></div>
+      <div class="crop-chip"><div class="ce">🤍</div><div class="cn">Coton</div><div class="ct">VARI · Verticilliose</div></div>
+      <div class="crop-chip"><div class="ce">🍅</div><div class="cn">Tomate</div><div class="ct">VARI + Hue · Mildiou</div></div>
+      <div class="crop-chip"><div class="ce">🍌</div><div class="cn">Banane</div><div class="ct">VARI + Hue · Panama</div></div>
+      <div class="crop-chip"><div class="ce">🍊</div><div class="cn">Agrumes</div><div class="ct">VARI + Hue · Greening</div></div>
+      <div class="crop-chip"><div class="ce">🌱</div><div class="cn">Autre</div><div class="ct">VARI générique</div></div>
+    </div>
+  </div>
+</section>
 
-// ─── SHOW/HIDE CUSTOM URL FIELD ────────────────────────────────────────────
-$('iphoneEndpoint').addEventListener('change', function() {
-  $('customEndpointUrl').style.display = this.value === 'custom' ? 'block' : 'none';
-});
+<!-- ── MARCHÉ ── -->
+<section id="market">
+  <div class="container">
+    <h2 class="section-title">Un marché massif, sous-adressé.</h2>
+    <p class="section-sub">L'agriculture représente plus de 60% de l'emploi en Afrique centrale. La numérisation agricole y est quasi-inexistante.</p>
+    <div class="market-grid">
+      <div class="market-card">
+        <div class="market-num">$8,7B</div>
+        <div class="market-label">Taille du marché mondial de la technologie drone agricole d'ici 2030 (MarketsandMarkets, 2024)</div>
+      </div>
+      <div class="market-card">
+        <div class="market-num">60%</div>
+        <div class="market-label">Part de la population active employée dans l'agriculture en RDC — 80M d'agriculteurs potentiellement concernés</div>
+      </div>
+      <div class="market-card">
+        <div class="market-num">&lt;2%</div>
+        <div class="market-label">Taux d'adoption d'outils numériques agricoles en Afrique centrale — le marché est presque entièrement vierge</div>
+      </div>
+    </div>
+  </div>
+</section>
 
-// ─── LOGGING ───────────────────────────────────────────────────────────────
-function logEvent(msg) {
-  const tbody = $('logBody');
-  const now = new Date().toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  if (tbody.children.length === 1 && tbody.children[0].textContent.includes('prêt')) tbody.innerHTML = '';
-  const tr = document.createElement('tr');
-  tr.innerHTML = `<td>${now}</td><td>${msg}</td>`;
-  tbody.prepend(tr);
-  while (tbody.children.length > 15) tbody.removeChild(tbody.lastChild);
-  S.logLines.unshift(`[${now}] ${msg}`);
-  if (S.logLines.length > 30) S.logLines.pop();
-}
+<!-- ── ROADMAP ── -->
+<section id="roadmap">
+  <div class="container">
+    <h2 class="section-title">Roadmap.</h2>
+    <p class="section-sub">Un développement progressif, ancré dans la réalité terrain.</p>
+    <div class="roadmap-steps">
+      <div class="roadmap-step">
+        <div class="step-bubble done">✓</div>
+        <h4>PWA &amp; moteur d'analyse</h4>
+        <p>App mobile installable, VARI, 11 cultures, rapports CSV, missions terrain.</p>
+        <span class="step-tag done">Terminé</span>
+      </div>
+      <div class="roadmap-step">
+        <div class="step-bubble active">🚁</div>
+        <h4>Drone jouet + premiers vols</h4>
+        <p>Tests avec drone grand public (DJI Tello ou équivalent). Validation du flux vidéo en conditions réelles.</p>
+        <span class="step-tag active">En cours</span>
+      </div>
+      <div class="roadmap-step">
+        <div class="step-bubble">🎯</div>
+        <h4>Pilote terrain RDC</h4>
+        <p>Tests sur cultures de manioc et maïs au Congo. Collecte de données réelles. Partenariats agricoles locaux.</p>
+        <span class="step-tag next">2026</span>
+      </div>
+      <div class="roadmap-step">
+        <div class="step-bubble">🚀</div>
+        <h4>Commercialisation</h4>
+        <p>Modèle SaaS pour coopératives agricoles. Drone intégré. Expansion Afrique de l'Est &amp; Europe.</p>
+        <span class="step-tag next">2027</span>
+      </div>
+    </div>
+  </div>
+</section>
 
-// ─── MODE ──────────────────────────────────────────────────────────────────
-function setMode(mode) {
-  S.mode = mode;
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
-  updateTop();
-  logEvent('Mode : ' + modeLabel());
-}
-document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => setMode(t.dataset.mode)));
+<!-- ── ÉQUIPE ── -->
+<section id="team">
+  <div class="container">
+    <div class="team-inner">
+      <div class="team-text">
+        <h2>Équipe Arti — Section Drone &amp; Innovation.</h2>
+        <p>Nous sommes une équipe jeune, basée entre la Belgique et la RDC, portée par la conviction que la technologie drone peut transformer l'agriculture africaine à un coût accessible.</p>
+        <p>Notre double ancrage — expertise technique belge et connaissance terrain congolaise — est notre avantage concurrentiel.</p>
+        <div>
+          <span class="team-badge">🇧🇪 Belgique</span>
+          <span class="team-badge">🇨🇩 RDC</span>
+          <span class="team-badge">🚁 Drone</span>
+          <span class="team-badge">🌱 AgriTech</span>
+        </div>
+      </div>
+      <div class="team-cards">
+        <div class="team-card">
+          <div class="team-avatar">👨‍💻</div>
+          <div>
+            <h4>Section Technologie</h4>
+            <p>Développement PWA, moteur d'analyse végétale, intégration drone et caméra</p>
+          </div>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar">🌾</div>
+          <div>
+            <h4>Section Agronomie</h4>
+            <p>Profils cultures, validation terrain, partenariats agriculteurs RDC</p>
+          </div>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar">🚁</div>
+          <div>
+            <h4>Section Drone &amp; Innovation</h4>
+            <p>Conception hardware, intégration capteurs, tests de vol en conditions réelles</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-function modeLabel() {
-  return { inspection: 'Inspection', mapping: 'Cartographie', connect: 'Wi‑Fi / Drone' }[S.mode] || 'Inspection';
-}
-function zoneLabel() {
-  return { center: 'Centre', top: 'Haut', bottom: 'Bas', left: 'Gauche', right: 'Droite', full: 'Plein cadre' }[S.zone] || 'Centre';
-}
+<!-- ── CONTACT ── -->
+<section id="contact">
+  <div class="container">
+    <h2>Intéressé par le projet ?</h2>
+    <p>Investisseurs, partenaires agricoles, institutions de financement — nous sommes ouverts à toute discussion. Répondons dans les 48h.</p>
+    <div class="contact-actions">
+      <a href="app.html" class="btn-white">🌱 Essayer l'app terrain</a>
+      <a href="mailto:contact@artiairlink.be" class="btn-ghost-white">✉️ Nous écrire</a>
+    </div>
+  </div>
+</section>
 
-// ─── ZONE ──────────────────────────────────────────────────────────────────
-document.querySelectorAll('.zone').forEach(z => z.addEventListener('click', () => {
-  document.querySelectorAll('.zone').forEach(el => el.classList.remove('active'));
-  z.classList.add('active');
-  S.zone = z.dataset.zone;
-  updateFocusBox();
-  updateTop();
-}));
+<!-- ── FOOTER ── -->
+<footer>
+  <p>Arti-AirLink AgroVision · Équipe Arti, Section Drone &amp; Innovation · Belgique &amp; RDC · 2026</p>
+  <p style="margin-top:6px"><a href="app.html">App terrain →</a></p>
+</footer>
 
-function getZoneRect(W, H) {
-  const sw = Math.floor(W * 0.22), sh = Math.floor(H * 0.22);
-  const cx = Math.floor((W - sw) / 2), cy = Math.floor((H - sh) / 2);
-  if (S.zone === 'full')   return { x: 0, y: 0, w: W, h: H };
-  if (S.zone === 'top')    return { x: cx, y: Math.floor(H * 0.10), w: sw, h: sh };
-  if (S.zone === 'bottom') return { x: cx, y: Math.floor(H * 0.68), w: sw, h: sh };
-  if (S.zone === 'left')   return { x: Math.floor(W * 0.10), y: cy, w: sw, h: sh };
-  if (S.zone === 'right')  return { x: Math.floor(W * 0.68), y: cy, w: sw, h: sh };
-  return { x: cx, y: cy, w: sw, h: sh }; // center
-}
-
-// FIX: update focus box position to match zone
-function updateFocusBox() {
-  const stage = document.querySelector('.live-stage');
-  const W = stage.offsetWidth, H = stage.offsetHeight;
-  const sw = Math.floor(W * 0.22), sh = Math.floor(H * 0.22);
-  const cx = Math.floor((W - sw) / 2), cy = Math.floor((H - sh) / 2);
-  const positions = {
-    center: { left: cx, top: cy, width: sw, height: sh },
-    top:    { left: cx, top: Math.floor(H * 0.10), width: sw, height: sh },
-    bottom: { left: cx, top: Math.floor(H * 0.68), width: sw, height: sh },
-    left:   { left: Math.floor(W * 0.10), top: cy, width: sw, height: sh },
-    right:  { left: Math.floor(W * 0.68), top: cy, width: sw, height: sh },
-    full:   { left: 8, top: 8, width: W - 16, height: H - 16 },
-  };
-  const p = positions[S.zone] || positions.center;
-  const fb = $('focusBox');
-  fb.style.left = p.left + 'px';
-  fb.style.top = p.top + 'px';
-  fb.style.width = p.width + 'px';
-  fb.style.height = p.height + 'px';
-}
-window.addEventListener('resize', updateFocusBox);
-
-// ─── TOP BAR ───────────────────────────────────────────────────────────────
-function updateTop() {
-  $('modeLabel').textContent = modeLabel();
-  $('sourceLabel').textContent = S.source;
-  $('stageMode').textContent = modeLabel();
-  $('stageSource').textContent = S.source;
-  $('stageZone').textContent = zoneLabel();
-  $('reportMode').textContent = modeLabel();
-  $('reportSource').textContent = S.source;
-  const live = S.source !== 'Aucune';
-  $('liveDot').className = 'dot' + (live ? ' live' : ''); // FIX: only green when active
-  updateMissionPanel();
-}
-
-// ─── MISSION PANEL ─────────────────────────────────────────────────────────
-function updateMissionPanel() {
-  const alt = +$('altitudeInput').value;
-  const ov  = +$('overlapInput').value;
-  const spd = +$('speedInput').value;
-  const typ = $('missionType').value;
-  $('mapMission').textContent = typ;
-  $('mapAltitude').textContent = alt + ' m';
-  $('mapOverlap').textContent = ov + '%';
-  $('mapSpeed').textContent = spd + ' m/s';
-  // FIX: rough surface estimate based on altitude (GSD approximation)
-  const gsd = (alt * 0.7) / 100; // cm/px approximation
-  const stripWidth = gsd * 4000 * (1 - ov / 100); // meters, ~4000px sensor width
-  $('missionCalc').textContent = `GSD estimé : ~${(gsd * 100).toFixed(1)} mm/px · Largeur bande : ~${Math.round(stripWidth)} m`;
-}
-['altitudeInput', 'overlapInput', 'speedInput', 'missionType'].forEach(id =>
-  $(id).addEventListener('input', updateMissionPanel)
-);
-
-// ─── COLOUR SCIENCE ────────────────────────────────────────────────────────
-function rgbToHex(r, g, b) {
-  return '#' + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('').toUpperCase();
-}
-
-// FIX: rich colour naming relevant to agricultural context
-function colorName(r, g, b) {
-  const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  const sat = max === 0 ? 0 : (max - min) / max;
-
-  if (lum < 30) return 'Très sombre / ombre';
-  if (lum > 220 && sat < 0.15) return 'Blanc / Sol clair / Ciel';
-  if (sat < 0.12) {
-    if (lum < 80)  return 'Sol foncé / Terre humide';
-    if (lum < 150) return 'Sol intermédiaire';
-    return 'Sol sec / Poussière';
-  }
-  // Dominance analysis
-  if (g > r + 15 && g > b + 15) {
-    if (r > 150 && g > 160) return 'Vert-jaune / Stress hydrique léger';
-    if (g > 120)             return 'Vert sain / Végétation active';
-    return 'Vert foncé / Culture dense';
-  }
-  if (r > g + 20 && r > b + 15) {
-    if (r > 160 && g > 100) return 'Brun-rouge / Sol ferralitique';
-    if (g < 80)              return 'Rouge / Maladie ou sol latéritique';
-    return 'Rouge-brun / Stress ou mûrissement';
-  }
-  if (r > 140 && g > 120 && b < 80) return 'Jaune / Chlorose ou sécheresse';
-  if (r > 120 && g > 100 && b < 70) return 'Ocre / Sol semi-aride';
-  if (b > r + 20 && b > g + 10)     return 'Bleu / Reflet eau ou ciel';
-  return 'Mixte / Signal composite';
-}
-
-// FIX: proper NDVI and metrics — removed nonsense temperature formula
-function computeMetrics(r, g, b) {
-  const ndvi = (g - r) / (g + r + 1);
-  const lum  = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
-  const max  = Math.max(r, g, b), min = Math.min(r, g, b);
-  const contrast = (max - min) / (max + 1);
-  const confidence = Math.max(28, Math.min(97, Math.round(35 + contrast * 85)));
-
-  let stateLabel, healthLabel, healthScore, stress, priority, severity;
-
-  if (ndvi > 0.25 && g > 100) {
-    stateLabel = 'Vigueur végétative élevée';
-    healthLabel = 'Excellent'; healthScore = 90; stress = 'Faible';
-    priority = 'Maintenir le suivi normal — culture en pleine vigueur';
-    severity = 'ok';
-  } else if (ndvi > 0.12 && g > 85) {
-    stateLabel = 'Culture saine';
-    healthLabel = 'Correct'; healthScore = 72; stress = 'Faible à modéré';
-    priority = 'Contrôler l\'homogénéité et l\'humidité du sol';
-    severity = 'ok';
-  } else if (ndvi > 0.02) {
-    stateLabel = 'Début de stress ou hétérogénéité';
-    healthLabel = 'Stress léger'; healthScore = 55; stress = 'Modéré';
-    priority = 'Vérifier irrigation, densité de semis et nutrition azotée';
-    severity = 'warn';
-  } else if (ndvi > -0.10) {
-    stateLabel = 'Stress prononcé ou végétation clairsemée';
-    healthLabel = 'Stress fort'; healthScore = 35; stress = 'Élevé';
-    priority = 'Inspection terrain recommandée — risque de perte de rendement';
-    severity = 'bad';
-  } else {
-    stateLabel = 'Zone non végétalisée ou dégât sévère';
-    healthLabel = 'Critique'; healthScore = 18; stress = 'Très élevé';
-    priority = 'Intervention immédiate — sol nu, brûlure ou maladie grave';
-    severity = 'bad';
-  }
-
-  return { ndvi, lum, confidence, stateLabel, healthLabel, healthScore, stress, priority, severity };
-}
-
-// ─── DRAW & SAMPLE ─────────────────────────────────────────────────────────
-function drawSource() {
-  const stage = document.querySelector('.live-stage');
-  canvas.width  = Math.max(1, stage.offsetWidth);
-  canvas.height = Math.max(1, stage.offsetHeight);
-
-  if (video.classList.contains('visible') && video.readyState >= 2) {
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    return true;
-  }
-  // FIX: check naturalWidth > 0 and naturalHeight > 0 (not just complete)
-  if (remoteImage.classList.contains('visible') && remoteImage.naturalWidth > 0 && remoteImage.naturalHeight > 0) {
-    ctx.drawImage(remoteImage, 0, 0, canvas.width, canvas.height);
-    return true;
-  }
-  return false;
-}
-
-function averageSample() {
-  const z = getZoneRect(canvas.width, canvas.height);
-  const sx = Math.max(1, z.x), sy = Math.max(1, z.y);
-  const sw = Math.max(1, Math.min(z.w, canvas.width - sx));
-  const sh = Math.max(1, Math.min(z.h, canvas.height - sy));
-  let data;
-  try { data = ctx.getImageData(sx, sy, sw, sh).data; } catch { return { r: 128, g: 128, b: 128, z }; }
-  let r = 0, g = 0, b = 0, n = 0;
-  // FIX: sample every 4th pixel (not 16th) for better accuracy, skip if alpha=0
-  for (let i = 0; i < data.length; i += 16) {
-    if (data[i + 3] < 10) continue;
-    r += data[i]; g += data[i + 1]; b += data[i + 2]; n++;
-  }
-  if (n === 0) return { r: 128, g: 128, b: 128, z };
-  return { r: Math.round(r / n), g: Math.round(g / n), b: Math.round(b / n), z };
-}
-
-// ─── UPDATE ALL UI ─────────────────────────────────────────────────────────
-function updateAll(sample) {
-  const { r, g, b } = sample;
-  const hex   = rgbToHex(r, g, b);
-  const cname = colorName(r, g, b);
-  const m     = computeMetrics(r, g, b);
-
-  // HUD
-  $('hudColor').textContent = cname.split('/')[0].trim();
-  $('hudHex').textContent   = hex;
-  $('hudNdviLive').textContent = m.ndvi.toFixed(3);
-  $('hudHealth').textContent   = m.healthScore + '%';
-  $('hudState').textContent    = m.healthLabel;
-  $('hudConfidence').textContent = m.confidence + '%';
-  $('hudLumi').textContent     = m.lum; // FIX: luminosity replaces nonsense temp
-
-  // Hero KPIs
-  $('heroState').textContent  = m.healthLabel;
-  $('heroHealth').textContent = m.healthScore + '%';
-  $('heroNdvi').textContent   = m.ndvi.toFixed(2);
-
-  // Summary
-  $('summaryMain').textContent = m.stateLabel;
-  $('summaryText').textContent = `Couleur dominante : ${cname}. Stress ${m.stress.toLowerCase()}, santé estimée à ${m.healthScore}%.`;
-  $('summaryAction').textContent = m.priority;
-  $('summaryActionText').textContent = S.mode === 'mapping'
-    ? `Mode cartographie — conserver un recouvrement de ${$('overlapInput').value}%. Zones sous ${Math.max(40, m.healthScore - 15)}% à marquer pour vérification.`
-    : `Mode inspection — capture la lecture si comparaison ultérieure ou transmission client requise.`;
-
-  // Report
-  $('reportState').textContent      = m.stateLabel;
-  $('reportStress').textContent     = m.stress;
-  $('reportZone').textContent       = zoneLabel();
-  $('reportAction').textContent     = m.priority;
-  $('reportConfidence').textContent = m.confidence + '%';
-  $('diagImmediate').textContent    = `${m.stateLabel} — santé ${m.healthScore}% — NDVI ${m.ndvi.toFixed(3)} — confiance ${m.confidence}%`;
-  $('diagOperator').textContent     = S.mode === 'mapping'
-    ? `Avance tant que le NDVI reste au-dessus de 0.10 et la confiance au-dessus de ${Math.max(50, m.confidence - 10)}%.`
-    : `Confirme par une seconde lecture sur un angle différent si NDVI inférieur à 0.05.`;
-
-  // Map panel (FIX: mapFrames driven by explicit captures, not loop)
-  $('mapCoverage').textContent = S.coverage + '%';
-  $('mapFrames').textContent   = String(S.captures);
-  $('heroCoverage').textContent = S.coverage + '%';
-
-  // Build text report for export
-  S.lastReport = [
-    '═══ ARTI-AIRLINK — AGROVISION V4 ═══',
-    'Rapport généré le : ' + new Date().toLocaleString('fr-BE'),
-    '',
-    'Mode mission       : ' + modeLabel(),
-    'Source active      : ' + S.source,
-    'Zone analysée      : ' + zoneLabel(),
-    '',
-    '── Analyse couleur ──',
-    'Couleur dominante  : ' + cname,
-    'Code HEX           : ' + hex,
-    'RGB                : R=' + r + ' G=' + g + ' B=' + b,
-    'Luminosité         : ' + m.lum + '/255',
-    '',
-    '── Végétation ──',
-    'NDVI simplifié     : ' + m.ndvi.toFixed(4),
-    'Santé végétale     : ' + m.healthScore + '% (' + m.healthLabel + ')',
-    'Niveau de stress   : ' + m.stress,
-    'État global        : ' + m.stateLabel,
-    'Confiance signal   : ' + m.confidence + '%',
-    '',
-    '── Recommandation ──',
-    m.priority,
-    '',
-    '── Mission drone ──',
-    'Altitude           : ' + $('altitudeInput').value + ' m',
-    'Recouvrement       : ' + $('overlapInput').value + '%',
-    'Vitesse            : ' + $('speedInput').value + ' m/s',
-    'Type mission       : ' + $('missionType').value,
-    'Captures session   : ' + S.captures,
-    'Couverture         : ' + S.coverage + '%',
-    '',
-    '── Journal ──',
-    ...S.logLines.slice(0, 10),
-    '',
-    'Équipe Arti — Section Drone & Innovation',
-    'Belgique → RDC — Inspection & Transport Léger',
-  ].join('\n');
-
-  return { hex, cname, metrics: m };
-}
-
-// ─── RENDER LOOP ───────────────────────────────────────────────────────────
-// FIX: single loop guard — no duplicate requestAnimationFrame chains
-function startLoop() {
-  if (S.loopRunning) return;
-  S.loopRunning = true;
-  renderLoop();
-}
-function renderLoop() {
-  if (!S.loopRunning) return;
-  const ok = drawSource();
-  if (ok) {
-    const sample = averageSample();
-    updateAll(sample);
-    updateFocusBox();
-  }
-  requestAnimationFrame(renderLoop);
-}
-
-// ─── LOCAL CAMERA ──────────────────────────────────────────────────────────
-async function startLocal() {
-  try {
-    stopAllSources();
-    S.localStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
-      audio: false
-    });
-    video.srcObject = S.localStream;
-    await video.play();
-    video.classList.add('visible');
-    S.source = 'Caméra locale';
-    $('statusText').textContent = 'Caméra locale active';
-    updateTop();
-    logEvent('Caméra locale activée ✓');
-    startLoop();
-  } catch (e) {
-    logEvent('Erreur caméra : ' + e.message);
-    alert('Impossible d\'activer la caméra.\n\n' + e.message);
-  }
-}
-
-function stopLocalTracks() {
-  if (S.localStream) {
-    S.localStream.getTracks().forEach(t => t.stop());
-    S.localStream = null;
-  }
-}
-function stopRemoteTimer() {
-  if (S.remoteTimer) { clearInterval(S.remoteTimer); S.remoteTimer = null; }
-}
-function stopAllSources() {
-  stopLocalTracks();
-  stopRemoteTimer();
-  S.loopRunning = false;
-  video.classList.remove('visible');
-  video.srcObject = null;
-  remoteImage.classList.remove('visible');
-  remoteImage.src = '';
-  S.source = 'Aucune';
-  $('statusText').textContent = 'Source coupée';
-  updateTop();
-  logEvent('Sources coupées');
-}
-
-// ─── IPHONE / REMOTE CONNECTION ────────────────────────────────────────────
-function buildRemoteUrl() {
-  const ep = $('iphoneEndpoint').value;
-  if (ep === 'custom') {
-    const u = $('customEndpointUrl').value.trim();
-    if (!u) { alert('Entre l\'URL complète dans le champ personnalisé.'); return null; }
-    return u;
-  }
-  const base = $('iphoneBaseUrl').value.trim().replace(/\/$/, '');
-  if (!base) { alert('Entre l\'adresse de base affichée sur l\'iPhone.'); return null; }
-  const endpointMap = { shot: '/shot.jpg', video: '/video', mjpeg: '/mjpeg', live: '/live' };
-  return base + (endpointMap[ep] || '/shot.jpg');
-}
-
-function connectRemote() {
-  const url = buildRemoteUrl();
-  if (!url) return;
-  stopAllSources();
-
-  const ep = $('iphoneEndpoint').value;
-  S.source = 'Flux Wi‑Fi';
-  updateTop();
-  logEvent('Connexion Wi‑Fi → ' + url);
-
-  // FIX: MJPEG flux → set img.src directly (browser renders MJPEG natively in <img>)
-  // FIX: Snapshot → poll with cache-bust at reasonable interval (350ms)
-  if (ep === 'video' || ep === 'mjpeg' || ep === 'live') {
-    // MJPEG direct stream — no polling needed
-    remoteImage.onload  = () => { $('statusText').textContent = 'Flux MJPEG actif'; $('connOk').style.display = 'flex'; $('connError').style.display = 'none'; };
-    remoteImage.onerror = () => { onRemoteError('Flux MJPEG inaccessible. Vérifiez l\'URL et que l\'iPhone est sur le même Wi‑Fi.'); };
-    remoteImage.src = url;
-    remoteImage.classList.add('visible');
-    S.remoteType = 'mjpeg';
-    startLoop();
-  } else {
-    // JPEG snapshot polling — FIX: 350ms instead of 1200ms
-    remoteImage.classList.add('visible');
-    S.remoteType = 'shot';
-    let errorCount = 0;
-    const poll = () => {
-      const ts = Date.now();
-      remoteImage.onerror = () => {
-        errorCount++;
-        if (errorCount > 3) { onRemoteError('Échec répété — impossible de charger l\'image. Vérifiez l\'URL, le Wi‑Fi commun, et que l\'app iPhone est bien active.'); }
-      };
-      remoteImage.onload = () => { errorCount = 0; $('connError').style.display = 'none'; $('connOk').style.display = 'flex'; $('statusText').textContent = 'Flux JPEG actif'; };
-      remoteImage.src = url + (url.includes('?') ? '&' : '?') + '_t=' + ts;
-    };
-    poll();
-    S.remoteTimer = setInterval(poll, 350);
-    startLoop();
-  }
-}
-
-function onRemoteError(msg) {
-  $('connError').style.display = 'flex';
-  $('connOk').style.display = 'none';
-  $('connErrorMsg').textContent = msg;
-  $('connBadge').textContent = 'Échec';
-  $('connBadge').className = 'conn-badge err';
-  $('statusText').textContent = 'Connexion échouée';
-  logEvent('Erreur : ' + msg);
-}
-
-// FIX: Connection test — tries to load one image and reports clearly
-function testConnection() {
-  const url = buildRemoteUrl();
-  if (!url) return;
-  $('connBadge').textContent = 'Test en cours…';
-  $('connBadge').className = 'conn-badge testing';
-  $('connError').style.display = 'none';
-  $('connOk').style.display = 'none';
-  logEvent('Test connexion : ' + url);
-
-  const ep = $('iphoneEndpoint').value;
-  const testUrl = (ep === 'video' || ep === 'mjpeg' || ep === 'live')
-    ? url  // For MJPEG we just try, browser will succeed or fail
-    : url + (url.includes('?') ? '&' : '?') + '_test=' + Date.now();
-
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  const timer = setTimeout(() => {
-    $('connBadge').textContent = 'Timeout';
-    $('connBadge').className = 'conn-badge err';
-    $('connError').style.display = 'flex';
-    $('connErrorMsg').textContent = 'Pas de réponse en 5s. L\'iPhone est-il sur le même Wi‑Fi ? L\'app est-elle bien lancée ?';
-    logEvent('Test : timeout');
-  }, 5000);
-  img.onload = () => {
-    clearTimeout(timer);
-    $('connBadge').textContent = 'Accessible ✓';
-    $('connBadge').className = 'conn-badge ok';
-    $('connOk').style.display = 'flex';
-    logEvent('Test : connexion OK ✓');
-  };
-  img.onerror = () => {
-    clearTimeout(timer);
-    const isHttps = location.protocol === 'https:';
-    const msg = isHttps
-      ? 'Bloqué — page en HTTPS, flux HTTP refusé. Ouvre le fichier HTML directement (file://) ou depuis http://localhost.'
-      : 'Image inaccessible. Vérifiez : même réseau Wi‑Fi, app iPhone active, URL correcte, port ouvert.';
-    $('connBadge').textContent = 'Échec';
-    $('connBadge').className = 'conn-badge err';
-    $('connError').style.display = 'flex';
-    $('connErrorMsg').textContent = msg;
-    logEvent('Test : échec — ' + msg);
-  };
-  img.src = testUrl;
-}
-
-// ─── FILE IMPORT ───────────────────────────────────────────────────────────
-function importFile(file) {
-  if (!file) return;
-  stopAllSources();
-  const url = URL.createObjectURL(file);
-  if (file.type.startsWith('video/')) {
-    video.src = url;
-    video.srcObject = null;
-    video.loop = true;
-    video.play();
-    video.classList.add('visible');
-    S.source = 'Vidéo importée';
-  } else if (file.type.startsWith('image/')) {
-    remoteImage.src = url;
-    remoteImage.classList.add('visible');
-    S.source = 'Image importée';
-  }
-  S.source = S.source || 'Fichier';
-  $('statusText').textContent = S.source + ' chargée';
-  updateTop();
-  logEvent(S.source + ' chargée : ' + file.name);
-  startLoop();
-}
-
-// ─── CAPTURE ───────────────────────────────────────────────────────────────
-function captureReading() {
-  const ok = drawSource();
-  if (!ok) { logEvent('Capture impossible — aucune source active'); return; }
-  const sample = averageSample();
-  const { hex, cname, metrics } = updateAll(sample);
-  const now = new Date().toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit' });
-
-  S.captures++;
-  // FIX: coverage = captures-based percentage (max 100), not frame-based
-  S.coverage = Math.min(100, S.captures * 8);
-
-  S.history.unshift({ time: now, color: cname.split('/')[0].trim(), hex, ndvi: metrics.ndvi.toFixed(3), state: metrics.stateLabel });
-  if (S.history.length > 15) S.history.pop();
-  renderHistory();
-  $('mapFrames').textContent = String(S.captures);
-  $('mapCoverage').textContent = S.coverage + '%';
-  $('heroCoverage').textContent = S.coverage + '%';
-  logEvent(`Capture #${S.captures} : ${cname.split('/')[0].trim()} / NDVI ${metrics.ndvi.toFixed(3)}`);
-}
-
-function renderHistory() {
-  const tbody = $('historyBody');
-  if (!S.history.length) {
-    tbody.innerHTML = '<tr><td colspan="4" style="color:var(--muted)">Aucune lecture.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = S.history.map(row => `
-    <tr>
-      <td>${row.time}</td>
-      <td style="display:flex;align-items:center;gap:8px">
-        <span style="display:inline-block;width:14px;height:14px;background:${row.hex};border-radius:4px;border:1px solid rgba(0,0,0,.1)"></span>
-        ${row.color}
-      </td>
-      <td>${row.ndvi}</td>
-      <td>${row.state}</td>
-    </tr>
-  `).join('');
-}
-
-// ─── RESET ─────────────────────────────────────────────────────────────────
-function resetSession() {
-  S.coverage = 0; S.captures = 0; S.history = []; S.logLines = [];
-  $('heroCoverage').textContent = '0%';
-  $('mapCoverage').textContent = '0%';
-  $('mapFrames').textContent = '0';
-  renderHistory();
-  logEvent('Session réinitialisée');
-}
-
-// ─── REPORT MODAL ──────────────────────────────────────────────────────────
-// FIX: proper modal instead of alert()
-function openReport() {
-  if (!S.lastReport) { logEvent('Aucune lecture à rapporter.'); return; }
-  $('modalDate').textContent = new Date().toLocaleString('fr-BE');
-  $('reportContent').textContent = S.lastReport;
-  $('modalBg').classList.add('show');
-}
-function closeModal() { $('modalBg').classList.remove('show'); }
-function downloadReport() {
-  const blob = new Blob([S.lastReport], { type: 'text/plain;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'agrovision-rapport-' + new Date().toISOString().slice(0, 10) + '.txt';
-  a.click();
-  logEvent('Rapport téléchargé ✓');
-}
-$('modalBg').addEventListener('click', e => { if (e.target === $('modalBg')) closeModal(); });
-
-// ─── EVENT BINDINGS ────────────────────────────────────────────────────────
-$('btnLocal').addEventListener('click', startLocal);
-$('ctaLocal').addEventListener('click', startLocal);
-$('btnStop').addEventListener('click', stopAllSources);
-$('btnIphoneQuick').addEventListener('click', connectRemote);
-$('btnConnTest').addEventListener('click', testConnection);
-$('fileInput').addEventListener('change', e => importFile(e.target.files[0]));
-$('btnCapture').addEventListener('click', captureReading);
-$('ctaCapture').addEventListener('click', captureReading);
-$('btnReport').addEventListener('click', openReport);
-$('ctaReport').addEventListener('click', openReport);
-$('btnReset').addEventListener('click', resetSession);
-
-// ─── INIT ──────────────────────────────────────────────────────────────────
-setMode('inspection');
-updateTop();
-updateFocusBox();
-renderHistory();
-logEvent('AgroVision V4 initialisé ✓');
-logEvent('Belgique & Congo — Arti-AirLink');
-</script>
 </body>
 </html>
