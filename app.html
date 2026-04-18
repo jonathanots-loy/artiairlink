@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AgroVision">
 <link rel="manifest" href="./manifest.json">
-<title>AgroVision V4 — Arti-AirLink</title>
+<title>AgroVision — Arti-AirLink</title>
 <style>
 :root{
   --bg:#f6f1e6;--bg2:#ece4d3;--card:#fffdf8;--card2:#f7f2e8;
@@ -273,7 +273,7 @@ textarea{min-height:80px;resize:vertical}
 <!-- ── HOME ── -->
 <section class="screen active" id="screen-home">
   <div class="card card-hero">
-    <div class="section-title" style="font-size:22px;letter-spacing:-.04em">AgroVision V4</div>
+    <div class="section-title" style="font-size:22px;letter-spacing:-.04em">AgroVision</div>
     <p class="section-sub">Diagnostic végétal par drone — persistance complète, cartographie réelle, rapports exportables.</p>
     <div class="row">
       <button class="bp" onclick="go('connect')">📷 Caméra DroidCam</button>
@@ -1313,7 +1313,7 @@ function buildReportText() {
   const m = S.analysis, ms = S.activeMission, caps = S.session.captures;
   const now = new Date().toLocaleString('fr-BE');
   return [
-    '═══ ARTI-AIRLINK — AGROVISION V4 ═══',
+    '═══ ARTI-AIRLINK — AGROVISION ═══',
     'Rapport généré le : ' + now,
     '',
     '── Mission ──',
@@ -1492,7 +1492,7 @@ async function init() {
     navigator.serviceWorker.register('./service-worker.js').catch(() => {});
   }
 
-  toast('AgroVision V4 prête — données restaurées ✓');
+  toast('AgroVision prête — données restaurées ✓');
 }
 
 init();

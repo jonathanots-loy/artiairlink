@@ -1,7 +1,7 @@
 // AgroVision — Service Worker
-// Stratégie : cache-first pour les assets, network-first pour les données
+// Stratégie : network-first (mises à jour toujours visibles), fallback cache hors ligne
 
-const CACHE = 'agrovision-v2';
+const CACHE = 'agrovision-v3';
 const ASSETS = [
   './app.html',
   './manifest.json'
@@ -25,26 +25,23 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// Fetch : cache-first avec fallback réseau
+// Fetch : network-first — essaie le réseau, tombe sur le cache si hors ligne
 self.addEventListener('fetch', e => {
-  // Ne traiter que les requêtes GET vers notre propre origine
   if (e.request.method !== 'GET') return;
 
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(response => {
-        // Mettre en cache les nouvelles ressources valides
-        if (response && response.status === 200 && response.type === 'basic') {
-          const clone = response.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
-        }
-        return response;
-      }).catch(() => {
-        // Hors ligne et pas en cache : retourner app.html comme fallback
-        if (e.request.destination === 'document') {
-          return caches.match('./app.html');
-        }
+    fetch(e.request).then(response => {
+      // Mettre à jour le cache avec la version réseau
+      if (response && response.status === 200 && response.type === 'basic') {
+        const clone = response.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
+      }
+      return response;
+    }).catch(() => {
+      // Hors ligne : servir depuis le cache
+      return caches.match(e.request).then(cached => {
+        if (cached) return cached;
+        if (e.request.destination === 'document') return caches.match('./app.html');
       });
     })
   );
