@@ -1,7 +1,7 @@
 // AgroVision — Service Worker
 // Stratégie : cache-first pour les assets, network-first pour les données
 
-const CACHE = 'agrovision-v1';
+const CACHE = 'agrovision-v2';
 const ASSETS = [
   './app.html',
   './manifest.json'
