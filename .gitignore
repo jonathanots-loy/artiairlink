@@ -1,0 +1,15 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archives (pas dans Git — trop lourd, juste pour référence locale)
+_archive/
+
+# Videos
+*.mp4
+*.mov
+*.avi
+
+# Zip
+*.zip

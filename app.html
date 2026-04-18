@@ -1,0 +1,1278 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#234d32">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AgroVision">
+<link rel="manifest" href="./manifest.json">
+<title>AgroVision V4 — Arti-AirLink</title>
+<style>
+:root{
+  --bg:#f6f1e6;--bg2:#ece4d3;--card:#fffdf8;--card2:#f7f2e8;
+  --line:#d8decc;--line2:#c7d2bf;
+  --ink:#1a281c;--muted:#667565;
+  --G1:#234d32;--G2:#2f6b45;--G3:#4e8d65;--G4:#8cbf6c;
+  --amber:#d1a05a;--amber2:#f0b84a;
+  --red:#ba5a4e;--red2:#e05050;
+  --blue:#6eb2df;
+  --sh:0 10px 32px rgba(35,77,50,.09);
+  --sh2:0 18px 48px rgba(35,77,50,.13);
+  --r:22px;--r2:18px;
+}
+*,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;min-height:100dvh;
+  background:radial-gradient(800px 360px at 0% -8%,rgba(110,178,223,.11),transparent 48%),
+             radial-gradient(700px 320px at 100% 0%,rgba(140,191,108,.13),transparent 42%),
+             linear-gradient(180deg,var(--bg),var(--bg2));
+  color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif}
+.app{max-width:580px;margin:0 auto;min-height:100dvh;position:relative;padding-bottom:88px}
+
+/* TOPBAR */
+.topbar{
+  position:sticky;top:0;z-index:40;
+  padding:14px 18px 12px;
+  background:rgba(246,241,230,.90);backdrop-filter:blur(18px);
+  border-bottom:1px solid rgba(35,77,50,.08);
+}
+.brand-row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.brand{display:flex;gap:11px;align-items:center}
+.mark{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--G1),var(--G3));color:#fff;font-size:20px;
+  box-shadow:0 4px 16px rgba(35,77,50,.28);flex-shrink:0}
+.brand-text .ey{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--G3);font-weight:800}
+.brand-text .ti{font-size:20px;font-weight:800;letter-spacing:-.04em;line-height:1}
+.src-badge{padding:7px 12px;border-radius:999px;border:1px solid var(--line);
+  background:#fff;font-size:11px;font-weight:700;white-space:nowrap;max-width:120px;
+  overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.src-badge.live{background:#eaf4e6;border-color:rgba(140,191,108,.5);color:var(--G1)}
+
+/* SCREENS */
+.screen{display:none;padding:16px;animation:fin .2s ease}
+.screen.active{display:block}
+@keyframes fin{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:16px;box-shadow:var(--sh);margin-bottom:14px}
+.card-hero{
+  background:radial-gradient(480px 200px at 100% 0%,rgba(140,191,108,.16),transparent 40%),
+             linear-gradient(135deg,#fffdf8,#f4eee2);
+}
+.section-title{font-size:15px;font-weight:800;letter-spacing:-.02em;margin:0 0 8px}
+.section-sub,.muted{color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 10px}
+
+/* METRICS */
+.grid{display:grid;gap:11px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+.metric{background:var(--card2);border:1px solid var(--line);border-radius:var(--r2);padding:13px;transition:all .2s}
+.metric.good{border-color:rgba(140,191,108,.6);background:#edf6e7}
+.metric.warn{border-color:rgba(209,160,90,.5);background:#fbf3e4}
+.metric.bad{border-color:rgba(186,90,78,.4);background:#f8ecea}
+.metric .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:700}
+.metric .v{font-size:24px;font-weight:800;margin-top:6px;line-height:1}
+.metric .s{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* BUTTONS */
+button{border:none;border-radius:14px;padding:11px 14px;font:inherit;font-weight:700;
+  cursor:pointer;transition:transform .15s,opacity .15s,box-shadow .15s}
+button:active{transform:scale(.97)}
+.bp{background:linear-gradient(135deg,var(--G1),var(--G2));color:#fff}
+.bp:hover{box-shadow:0 4px 18px rgba(35,77,50,.3)}
+.bs{background:linear-gradient(135deg,var(--blue),#95cbe9);color:#173142}
+.bg{background:#fff;border:1px solid var(--line2);color:var(--ink)}
+.bd{background:#f7e8e5;border:1px solid #ecc7c1;color:var(--red)}
+.bw{background:#fdf3e0;border:1px solid #f0d098;color:#8a5c18}
+.btn-full{width:100%}
+.row{display:flex;gap:9px;flex-wrap:wrap}
+.row button{flex:1;min-width:0}
+
+/* FORMS */
+label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.12em;font-weight:700;margin-bottom:5px}
+input,select,textarea{
+  width:100%;border:1px solid var(--line2);background:#fff;color:var(--ink);
+  border-radius:14px;padding:11px 13px;font:inherit;outline:none;
+  transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--G3);box-shadow:0 0 0 3px rgba(78,141,101,.10)}
+textarea{min-height:80px;resize:vertical}
+.field{margin-bottom:12px}
+
+/* STEPS */
+.steps{display:grid;gap:8px}
+.step{background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;gap:12px;align-items:flex-start}
+.step-num{width:26px;height:26px;border-radius:50%;background:var(--G1);color:#fff;
+  font-size:12px;font-weight:800;display:grid;place-items:center;flex-shrink:0;margin-top:1px}
+.step-body .step-title{font-weight:700;font-size:13px;margin:0 0 2px}
+.step-body .step-desc{font-size:12px;color:var(--muted);margin:0;line-height:1.55}
+
+/* CAMERA LIST */
+.cam-list{display:grid;gap:9px}
+.cam-tile{padding:13px;border-radius:16px;border:1px solid var(--line);background:#fff;
+  cursor:pointer;transition:all .18s}
+.cam-tile:hover{transform:translateY(-1px);border-color:var(--line2)}
+.cam-tile.sel{border:2px solid var(--G3);background:#edf6e9}
+.cam-tile.droidcam{border-color:rgba(110,178,223,.6);background:#f2f8fd}
+.cam-tile .cn{font-weight:800;font-size:14px;display:flex;align-items:center;gap:8px}
+.cam-tile .cm{font-size:12px;color:var(--muted);margin-top:3px}
+.cam-badge{background:var(--blue);color:#fff;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:800}
+.cam-badge.rec{background:var(--G3)}
+
+/* LIVE STAGE */
+.stage{position:relative;overflow:hidden;border-radius:22px;background:#0e1e14;
+  border:1px solid rgba(255,255,255,.06);aspect-ratio:4/3;max-height:360px}
+.stage::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),
+             linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
+  background-size:40px 40px}
+#lv,#ri,#cv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#lv,#ri{display:none}
+#lv.on,#ri.on{display:block}
+#cv{z-index:2}
+.focus-ring{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:120px;height:120px;border:2px solid rgba(255,255,255,.75);border-radius:20px;z-index:3;pointer-events:none}
+.focus-ring::before{content:"";position:absolute;width:18px;height:2px;background:rgba(255,255,255,.85);top:50%;left:50%;transform:translate(-50%,-50%)}
+.focus-ring::after{content:"";position:absolute;width:2px;height:18px;background:rgba(255,255,255,.85);top:50%;left:50%;transform:translate(-50%,-50%)}
+.stage-hud{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;gap:8px;z-index:4;flex-wrap:wrap}
+.hud-pill{background:rgba(14,30,20,.80);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.10);
+  color:#e8f4ea;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:700}
+.stage-empty{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:10px;background:rgba(14,30,20,.88);color:#c5dcc8;text-align:center;padding:20px}
+.stage-empty .ei{font-size:48px}
+.stage-empty h4{margin:0;font-size:16px;color:#fff}
+.stage-empty p{margin:0;font-size:13px;max-width:200px}
+
+/* HEALTH CARD */
+.health-block{border-radius:var(--r);padding:16px;margin-bottom:12px;border:2px solid transparent;transition:all .3s}
+.health-block.good{background:#e9f6e5;border-color:#a8d8a0}
+.health-block.warn{background:#fdf0db;border-color:#e8c070}
+.health-block.bad{background:#fde8e6;border-color:#e0a0a0}
+.hb-state{font-size:20px;font-weight:800;margin:0 0 4px;font-family:Inter,sans-serif;letter-spacing:-.03em}
+.hb-reco{font-size:13px;color:var(--ink);margin:0 0 10px;line-height:1.55}
+.hb-chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{padding:5px 10px;border-radius:999px;font-size:11px;font-weight:700;background:rgba(0,0,0,.06)}
+
+/* CARTOGRAPHY MAP */
+.map-wrap{position:relative;border-radius:20px;overflow:hidden;border:1px solid var(--line);background:#e8f0e2;margin-bottom:12px}
+.map-canvas-bg{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(circle at 22% 30%,rgba(140,191,108,.32),transparent 18%),
+    radial-gradient(circle at 60% 55%,rgba(78,141,101,.14),transparent 20%),
+    radial-gradient(circle at 80% 25%,rgba(209,160,90,.16),transparent 14%),
+    linear-gradient(135deg,#eef5e7,#e3edd9);
+}
+.map-grid-overlay{position:absolute;inset:0;
+  background:linear-gradient(rgba(35,77,50,.06) 1px,transparent 1px),
+             linear-gradient(90deg,rgba(35,77,50,.06) 1px,transparent 1px);
+  background-size:36px 36px}
+#mapSvg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.map-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.leg{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);
+  border-radius:12px;padding:8px 10px;font-size:11px;font-weight:700}
+.leg-dot{width:10px;height:10px;border-radius:50%}
+
+/* HISTORY */
+.hist-item{display:flex;align-items:center;gap:11px;padding:11px;background:var(--card2);
+  border:1px solid var(--line);border-radius:16px;margin-bottom:8px}
+.hist-swatch{width:38px;height:38px;border-radius:10px;flex-shrink:0;border:1px solid rgba(0,0,0,.08)}
+.hist-body{flex:1;min-width:0}
+.hist-name{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.hist-right{text-align:right;flex-shrink:0}
+.hist-ndvi{font-size:13px;font-weight:800;color:var(--G1)}
+.hist-time{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* REPORT */
+.report-block{background:linear-gradient(135deg,var(--G1),var(--G2));color:#fff;
+  border-radius:var(--r);padding:18px;margin-bottom:12px}
+.rb-label{font-size:10px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.12em;font-weight:700}
+.rb-text{font-size:15px;font-weight:700;margin:6px 0 0;line-height:1.55}
+.report-table{width:100%;border-collapse:collapse;font-size:12px}
+.report-table th,.report-table td{padding:9px 10px;text-align:left;border-bottom:1px solid rgba(35,77,50,.07)}
+.report-table th{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.10em;font-weight:700;background:#f8f5ee}
+.report-table tr:last-child td{border-bottom:none}
+
+/* MISSIONS LIST */
+.mission-item{display:flex;align-items:center;gap:12px;padding:13px;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r2);
+  margin-bottom:9px;cursor:pointer;transition:all .15s}
+.mission-item:hover{border-color:var(--G3)}
+.mission-item:active{transform:scale(.99)}
+.mi-icon{width:42px;height:42px;border-radius:11px;background:var(--card2);display:grid;place-items:center;font-size:22px;flex-shrink:0}
+.mi-body{flex:1;min-width:0}
+.mi-name{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mi-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.mi-active-badge{background:#eaf4e6;color:var(--G1);border-radius:8px;padding:3px 8px;font-size:10px;font-weight:800;flex-shrink:0}
+
+/* TABS */
+.tabs{position:fixed;left:0;right:0;bottom:0;max-width:580px;margin:0 auto;
+  background:rgba(255,253,248,.95);backdrop-filter:blur(18px);
+  border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(6,1fr);
+  padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));z-index:50}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;padding:7px 2px;border-radius:14px;color:var(--muted);
+  font-size:10px;font-weight:700;transition:all .18s;cursor:pointer}
+.tab.active{background:#edf4ee;color:var(--G1)}
+.tab .ico{font-size:20px;line-height:1}
+
+/* TOASTS */
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(10px);
+  background:var(--G1);color:#fff;border-radius:999px;padding:11px 18px;
+  font-size:13px;font-weight:700;box-shadow:var(--sh2);opacity:0;pointer-events:none;
+  transition:all .22s;z-index:70;white-space:nowrap;max-width:calc(100vw - 32px);text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* INSTALL BANNER */
+.install-bar{position:fixed;left:12px;right:12px;bottom:90px;max-width:556px;margin:0 auto;
+  background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--sh2);
+  padding:13px;display:none;z-index:60}
+.install-bar.show{display:block}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;z-index:100;background:rgba(26,40,28,.55);
+  backdrop-filter:blur(6px);align-items:flex-end}
+.modal-bg.show{display:flex}
+.modal{background:var(--card);border-radius:var(--r) var(--r) 0 0;width:100%;
+  max-height:85dvh;overflow-y:auto;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));
+  box-shadow:0 -8px 40px rgba(26,40,28,.2)}
+.modal-handle{width:36px;height:4px;border-radius:2px;background:var(--line2);margin:0 auto 14px}
+.modal-pre{white-space:pre-wrap;background:var(--card2);border:1px solid var(--line);
+  border-radius:14px;padding:14px;font-size:12px;font-family:monospace;
+  max-height:40dvh;overflow-y:auto;line-height:1.8;color:var(--ink);margin-bottom:14px}
+
+/* BANNER */
+.banner{display:flex;align-items:flex-start;gap:9px;padding:11px 13px;border-radius:14px;
+  font-size:13px;line-height:1.6;margin-bottom:12px}
+.banner.info{background:#e8f0fe;color:#1a3a8f;border:1px solid #bad0ff}
+.banner.warn{background:#fdf3e0;color:#7a4f0a;border:1px solid #f0d098}
+.banner.ok{background:#e8f4e6;color:#1a5a22;border:1px solid #a8d8a0}
+.bico{font-size:15px;flex-shrink:0;margin-top:2px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand-row">
+    <div class="brand">
+      <div class="mark">🌿</div>
+      <div class="brand-text">
+        <div class="ey">Arti-AirLink · AgroVision</div>
+        <div class="ti" id="screenTitle">Accueil</div>
+      </div>
+    </div>
+    <div class="src-badge" id="srcBadge">Aucune source</div>
+  </div>
+</div>
+
+<!-- ── HOME ── -->
+<section class="screen active" id="screen-home">
+  <div class="card card-hero">
+    <div class="section-title" style="font-size:22px;letter-spacing:-.04em">AgroVision V4</div>
+    <p class="section-sub">Diagnostic végétal par drone — persistance complète, cartographie réelle, rapports exportables.</p>
+    <div class="row">
+      <button class="bp" onclick="go('connect')">📷 Caméra DroidCam</button>
+      <button class="bg" onclick="go('missions')">🗂️ Missions</button>
+    </div>
+  </div>
+
+  <!-- Active mission banner -->
+  <div id="homeMissionBanner" style="display:none" class="banner ok">
+    <span class="bico">📋</span>
+    <div>Mission active : <strong id="homeMissionName">—</strong><br>
+    <span style="font-size:11px;opacity:.8" id="homeMissionMeta">—</span></div>
+  </div>
+
+  <div class="grid g2">
+    <div class="metric" id="homeHealthCard"><div class="k">Santé végétale</div><div class="v" id="homeHealth">—</div><div class="s" id="homeHealthLabel">Aucune lecture</div></div>
+    <div class="metric"><div class="k">Confiance</div><div class="v" id="homeConf">—</div><div class="s">Qualité signal</div></div>
+    <div class="metric"><div class="k">Couverture</div><div class="v" id="homeCov">0%</div><div class="s">Mission en cours</div></div>
+    <div class="metric"><div class="k">Captures session</div><div class="v" id="homeCaps">0</div><div class="s">Enregistrées</div></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Accès rapide</div>
+    <div class="grid g2">
+      <button class="bp" onclick="go('analyze')">🔬 Analyse</button>
+      <button class="bs" onclick="go('map')">🗺️ Carte mission</button>
+      <button class="bg" onclick="go('report')">📋 Rapport</button>
+      <button class="bg" onclick="go('history')">🕐 Historique</button>
+    </div>
+  </div>
+</section>
+
+<!-- ── MISSIONS ── -->
+<section class="screen" id="screen-missions">
+  <div class="card">
+    <div class="section-title">Missions terrain</div>
+    <p class="section-sub">Chaque mission regroupe vos captures, paramètres et rapports. Les données sont sauvegardées localement.</p>
+    <button class="bp btn-full" onclick="showMissionForm()">+ Nouvelle mission</button>
+  </div>
+
+  <div id="missionFormCard" style="display:none" class="card">
+    <div class="section-title">Créer une mission</div>
+    <div class="grid g2">
+      <div class="field"><label>Titre</label><input id="fTitle" placeholder="Inspection parcelle nord"></div>
+      <div class="field"><label>Type</label>
+        <select id="fType">
+          <option value="inspection">Inspection</option>
+          <option value="mapping">Cartographie</option>
+          <option value="mixed">Inspection + Carto</option>
+        </select>
+      </div>
+      <div class="field"><label>Site / Parcelle</label><input id="fSite" placeholder="Champ A3 — Kinshasa"></div>
+      <div class="field"><label>Culture</label>
+        <select id="fCrop">
+          <option>Maïs</option><option>Manioc</option><option>Blé</option>
+          <option>Café</option><option>Soja</option><option>Coton</option><option>Riz</option><option>Autre</option>
+        </select>
+      </div>
+      <div class="field"><label>Opérateur</label><input id="fOperator" placeholder="Nom de l'opérateur"></div>
+      <div class="field"><label>Notes</label><textarea id="fNotes" placeholder="Météo, contexte, observations…" style="min-height:60px"></textarea></div>
+    </div>
+    <div class="row">
+      <button class="bp" onclick="createMission()">✓ Créer</button>
+      <button class="bg" onclick="hideMissionForm()">Annuler</button>
+    </div>
+  </div>
+
+  <div id="missionListEl"></div>
+</section>
+
+<!-- ── CAMERA / DROIDCAM ── -->
+<section class="screen" id="screen-connect">
+  <div class="card" style="background:linear-gradient(135deg,#edf6fb,#e0f0f8);border-color:rgba(110,178,223,.35)">
+    <div class="section-title">📱 iPhone via DroidCam — Méthode unique</div>
+    <p class="section-sub">La seule méthode qui fonctionne : DroidCam connecte l'iPhone comme une vraie webcam système, visible directement par le navigateur.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Installer DroidCam sur les deux appareils</div>
+          <div class="step-desc">App Store (iPhone) + client Windows/Mac/Linux sur l'ordinateur.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Connecter via le client DroidCam sur le PC</div>
+          <div class="step-desc">Entrez l'IP affichée sur l'iPhone dans le client PC et cliquez "Connect". L'iPhone peut être sur le même Wi-Fi ou en USB.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Détecter les caméras dans AgroVision</div>
+          <div class="step-desc">Cliquez sur "Détecter les caméras" ci-dessous. DroidCam apparaîtra dans la liste.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Sélectionner DroidCam et activer</div>
+          <div class="step-desc">Cliquez sur la tuile DroidCam (surlignée en bleu) puis sur "Utiliser cette caméra".</div>
+        </div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="bp" onclick="detectCameras()">🔍 Détecter les caméras</button>
+      <button class="bg" onclick="startDefaultCam()">Caméra par défaut</button>
+      <button class="bd" onclick="stopAll()">⏹ Stop</button>
+    </div>
+  </div>
+
+  <div class="card" id="camListCard" style="display:none">
+    <div class="section-title">Caméras disponibles</div>
+    <div class="cam-list" id="camList"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="bs" onclick="useSelectedCam()">▶ Utiliser cette caméra</button>
+    </div>
+    <p class="muted" id="camStatus" style="margin-top:10px;margin-bottom:0">Aucune caméra sélectionnée.</p>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Autres sources</div>
+    <div class="field"><label>Import image / vidéo drone</label>
+      <input type="file" id="fileInput" accept="image/*,video/*">
+    </div>
+    <div class="row">
+      <button class="bg" onclick="loadFile()">Charger le fichier</button>
+      <button class="bd" onclick="stopAll()">⏹ Couper toute source</button>
+    </div>
+  </div>
+</section>
+
+<!-- ── ANALYSE ── -->
+<section class="screen" id="screen-analyze">
+  <div class="card" style="padding:12px">
+    <div class="stage">
+      <div class="stage-hud">
+        <div class="hud-pill">📷 <span id="hpSrc">Aucune</span></div>
+        <div class="hud-pill">📋 <span id="hpMission">—</span></div>
+      </div>
+      <video id="lv" autoplay playsinline muted></video>
+      <img id="ri" alt="">
+      <canvas id="cv"></canvas>
+      <div class="focus-ring" id="focusRing"></div>
+      <div class="stage-empty" id="stageEmpty">
+        <div class="ei">📡</div>
+        <h4>Aucune source active</h4>
+        <p>Activez DroidCam ou une autre source dans l'onglet Caméra.</p>
+        <button class="bg" style="margin-top:4px;font-size:12px" onclick="go('connect')">→ Aller à Caméra</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="health-block" id="healthBlock">
+    <div class="hb-state" id="hbState">—</div>
+    <div class="hb-reco" id="hbReco">Activez une source pour démarrer l'analyse.</div>
+    <div class="hb-chips">
+      <span class="chip" id="hbStress">Stress : —</span>
+      <span class="chip" id="hbConf">Confiance : —</span>
+    </div>
+  </div>
+
+  <div class="grid g2" style="margin-bottom:12px">
+    <div class="metric" id="mCardColor"><div class="k">Couleur</div><div class="v" style="font-size:16px" id="mColor">—</div><div class="s" id="mHex">#—</div></div>
+    <div class="metric"><div class="k">NDVI simplifié</div><div class="v" id="mNdvi">—</div><div class="s">(G−R)/(G+R)</div></div>
+    <div class="metric"><div class="k">Santé</div><div class="v" id="mHealth">—</div><div class="s" id="mHealthLbl">—</div></div>
+    <div class="metric"><div class="k">Luminosité</div><div class="v" id="mLumi">—</div><div class="s">0 – 255</div></div>
+  </div>
+
+  <div class="row">
+    <button class="bp" onclick="captureReading()">📍 Capturer</button>
+    <button class="bs" onclick="go('map')">🗺️ Voir carte</button>
+    <button class="bg" onclick="go('report')">📋 Rapport</button>
+  </div>
+</section>
+
+<!-- ── CARTE MISSION ── -->
+<section class="screen" id="screen-map">
+  <div class="card">
+    <div class="section-title">Carte de mission — Trajectoire drone</div>
+    <p class="section-sub">Chaque capture est placée sur la grille de vol en ordre lawnmower. La couleur indique l'état végétal au moment de la capture.</p>
+    <div class="map-wrap" style="height:300px">
+      <div class="map-canvas-bg"></div>
+      <div class="map-grid-overlay"></div>
+      <svg id="mapSvg" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="map-legend">
+      <div class="leg"><span class="leg-dot" style="background:#8cbf6c"></span>Excellent</div>
+      <div class="leg"><span class="leg-dot" style="background:#d1a05a"></span>Stress</div>
+      <div class="leg"><span class="leg-dot" style="background:#ba5a4e"></span>Critique</div>
+    </div>
+  </div>
+
+  <div class="grid g3" style="margin-bottom:12px">
+    <div class="metric"><div class="k">Couverture</div><div class="v" id="mapCov">0%</div><div class="s">Mission</div></div>
+    <div class="metric"><div class="k">Captures</div><div class="v" id="mapCaps">0</div><div class="s">Points</div></div>
+    <div class="metric"><div class="k">NDVI moyen</div><div class="v" id="mapNdvi">—</div><div class="s">Session</div></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Paramètres mission</div>
+    <div class="grid g2">
+      <div class="field"><label>Altitude (m)</label><input type="number" id="mapAlt" value="30" min="5" max="400"></div>
+      <div class="field"><label>Recouvrement (%)</label><input type="number" id="mapOv" value="75" min="30" max="95"></div>
+      <div class="field"><label>Vitesse (m/s)</label><input type="number" id="mapSpd" value="4" min="1" max="15"></div>
+      <div class="field"><label>Type mission</label>
+        <select id="mapType"><option>Lawnmower</option><option>Orbital</option><option>Scan ciblé</option></select>
+      </div>
+    </div>
+    <div class="banner info" id="mapCalcBanner">
+      <span class="bico">📐</span><span id="mapCalcText">Configurez les paramètres pour voir le calcul.</span>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="bp" onclick="saveMapParams()">Enregistrer paramètres</button>
+      <button class="bd btn-full" onclick="resetSession()">↺ Réinitialiser session</button>
+    </div>
+  </div>
+</section>
+
+<!-- ── RAPPORT ── -->
+<section class="screen" id="screen-report">
+  <div class="report-block">
+    <div class="rb-label">Action recommandée</div>
+    <div class="rb-text" id="rpAction">Effectuez des captures pour générer le rapport.</div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Synthèse mission</div>
+    <table class="report-table" id="reportTable">
+      <tbody>
+        <tr><th>État global</th><td id="rpState">—</td></tr>
+        <tr><th>Stress</th><td id="rpStress">—</td></tr>
+        <tr><th>NDVI</th><td id="rpNdvi">—</td></tr>
+        <tr><th>Santé</th><td id="rpHealth">—</td></tr>
+        <tr><th>Confiance</th><td id="rpConf">—</td></tr>
+        <tr><th>Couverture</th><td id="rpCov">0%</td></tr>
+        <tr><th>Captures session</th><td id="rpCaps">0</td></tr>
+        <tr><th>Mission</th><td id="rpMission">—</td></tr>
+        <tr><th>Site</th><td id="rpSite">—</td></tr>
+        <tr><th>Culture</th><td id="rpCrop">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Historique rapide</div>
+    <div id="reportHistory"><p class="muted">Aucune capture enregistrée.</p></div>
+  </div>
+
+  <div class="row">
+    <button class="bp" onclick="openReportModal()">📋 Rapport complet</button>
+    <button class="bs" onclick="exportCSV()">⬇ Export CSV</button>
+  </div>
+</section>
+
+<!-- ── HISTORIQUE ── -->
+<section class="screen" id="screen-history">
+  <div class="card">
+    <div class="section-title">Historique complet</div>
+    <p class="section-sub">Toutes les captures sauvegardées en base locale — persistent au refresh.</p>
+    <div class="row" style="margin-bottom:12px">
+      <button class="bs" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="bd" onclick="clearHistory()">🗑 Effacer historique</button>
+    </div>
+  </div>
+  <div id="historyList"><p class="muted" style="padding:0 16px">Aucune capture.</p></div>
+</section>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" data-s="home"     onclick="go('home')">    <div class="ico">🏠</div><div>Accueil</div></div>
+  <div class="tab"        data-s="missions" onclick="go('missions')"><div class="ico">🗂️</div><div>Missions</div></div>
+  <div class="tab"        data-s="connect"  onclick="go('connect')"> <div class="ico">📷</div><div>Caméra</div></div>
+  <div class="tab"        data-s="analyze"  onclick="go('analyze')"> <div class="ico">🔬</div><div>Analyse</div></div>
+  <div class="tab"        data-s="map"      onclick="go('map')">     <div class="ico">🗺️</div><div>Carte</div></div>
+  <div class="tab"        data-s="report"   onclick="go('report')">  <div class="ico">📋</div><div>Rapport</div></div>
+</div>
+
+<!-- INSTALL BAR -->
+<div class="install-bar" id="installBar">
+  <p class="muted" style="margin:0 0 10px"><strong>Installer AgroVision</strong> — fonctionne comme une vraie app, disponible hors connexion.</p>
+  <div class="row"><button class="bp" id="installBtn">Installer sur cet appareil</button><button class="bg" id="dismissInstall">Plus tard</button></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- REPORT MODAL -->
+<div class="modal-bg" id="reportModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="section-title">Rapport complet</div>
+    <p class="muted" id="modalDate" style="margin-bottom:12px">—</p>
+    <pre class="modal-pre" id="modalContent">Aucune donnée.</pre>
+    <div class="row">
+      <button class="bp" onclick="downloadReport()">⬇ Télécharger .txt</button>
+      <button class="bg" onclick="closeModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- .app -->
+<script>
+'use strict';
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+const S = {
+  source: { type: null, name: 'Aucune' },
+  analysis: { ndvi: null, healthScore: null, healthLabel: '—', stress: '—', confidence: null, recommendation: '—', colorName: '—', hex: '#808080', lumi: 0, severity: '' },
+  session: { captures: [], coverage: 0 },
+  activeMission: null,
+  cameras: [], selectedDeviceId: null,
+  localStream: null,
+  loopRunning: false,
+  mapParams: { altitude: 30, overlap: 75, speed: 4, missionType: 'Lawnmower' },
+};
+let toastTimer = null, deferredPrompt = null;
+
+// ═══════════════════════════════════════
+// INDEXEDDB — Full persistence
+// ═══════════════════════════════════════
+const DB = (() => {
+  let _db = null;
+  function open() {
+    return new Promise((res, rej) => {
+      const req = indexedDB.open('agrovision4', 3);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('missions'))
+          db.createObjectStore('missions', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('captures')) {
+          const cs = db.createObjectStore('captures', { keyPath: 'id' });
+          cs.createIndex('missionId', 'missionId');
+          cs.createIndex('ts', 'ts');
+        }
+        if (!db.objectStoreNames.contains('settings'))
+          db.createObjectStore('settings', { keyPath: 'key' });
+      };
+      req.onsuccess = e => { _db = e.target.result; res(); };
+      req.onerror   = () => rej(req.error);
+    });
+  }
+  function tx(store, mode = 'readonly') { return _db.transaction(store, mode).objectStore(store); }
+  const put    = (store, obj)  => new Promise((r, j) => { const q = tx(store, 'readwrite').put(obj);  q.onsuccess = () => r(q.result); q.onerror = () => j(q.error); });
+  const getAll = (store)       => new Promise((r, j) => { const q = tx(store).getAll();               q.onsuccess = () => r(q.result); q.onerror = () => j(q.error); });
+  const del    = (store, key)  => new Promise((r, j) => { const q = tx(store, 'readwrite').delete(key); q.onsuccess = () => r(); q.onerror = () => j(q.error); });
+  const clear  = (store)       => new Promise((r, j) => { const q = tx(store, 'readwrite').clear();   q.onsuccess = () => r(); q.onerror = () => j(q.error); });
+  const get    = (store, key)  => new Promise((r, j) => { const q = tx(store).get(key);               q.onsuccess = () => r(q.result); q.onerror = () => j(q.error); });
+  return { open, put, getAll, del, clear, get };
+})();
+
+// LS helpers for light prefs
+const LS = {
+  get: (k, d) => { try { const v = localStorage.getItem(k); return v !== null ? JSON.parse(v) : d; } catch { return d; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+// ═══════════════════════════════════════
+// COLOUR SCIENCE
+// ═══════════════════════════════════════
+function toHex(r, g, b) {
+  return '#' + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+function colorLabel(r, g, b) {
+  const lum = 0.299*r + 0.587*g + 0.114*b;
+  const max  = Math.max(r, g, b), min = Math.min(r, g, b);
+  const sat  = max === 0 ? 0 : (max - min) / max;
+  if (lum < 28) return 'Ombre / Très sombre';
+  if (lum > 218 && sat < 0.12) return 'Blanc / Ciel / Sol clair';
+  if (sat < 0.12) return lum < 90 ? 'Sol foncé / Humide' : lum < 160 ? 'Sol intermédiaire' : 'Sol sec / Poussière';
+  if (g > r + 18 && g > b + 18) {
+    if (r > 145 && g > 155) return 'Vert-jaune / Stress hydrique';
+    if (g > 115) return 'Vert sain / Végétation active';
+    return 'Vert foncé / Culture dense';
+  }
+  if (r > g + 20 && r > b + 14) {
+    if (g < 80) return 'Rouge / Maladie ou sol latéritique';
+    return 'Brun-rouge / Stress ou ferralitique';
+  }
+  if (r > 135 && g > 115 && b < 80) return 'Jaune / Chlorose ou sécheresse';
+  if (r > 120 && g > 100 && b < 70) return 'Ocre / Sol semi-aride';
+  if (b > r + 18 && b > g + 8)      return 'Bleu / Eau ou reflet ciel';
+  return 'Mixte / Signal composite';
+}
+function computeMetrics(r, g, b) {
+  const ndvi  = (g - r) / (g + r + 1);
+  const lumi  = Math.round(0.299*r + 0.587*g + 0.114*b);
+  const max   = Math.max(r, g, b), min = Math.min(r, g, b);
+  const conf  = Math.max(28, Math.min(96, Math.round(35 + ((max-min)/(max+1)) * 85)));
+  let hl, hs, stress, rec, sev;
+  if (ndvi > 0.25 && g > 100)      { hl='Excellent'; hs=90; stress='Faible';            rec='Culture en pleine vigueur — suivi normal.'; sev='good'; }
+  else if (ndvi > 0.12 && g > 85)  { hl='Correct';   hs=72; stress='Faible à modéré';  rec='Contrôler homogénéité et humidité du sol.'; sev='good'; }
+  else if (ndvi > 0.02)             { hl='Stress léger'; hs=54; stress='Modéré';        rec='Vérifier irrigation, densité et nutrition.'; sev='warn'; }
+  else if (ndvi > -0.10)            { hl='Stress fort';  hs=34; stress='Élevé';         rec='Inspection terrain — risque perte de rendement.'; sev='bad'; }
+  else                              { hl='Critique';     hs=16; stress='Très élevé';    rec='Intervention immédiate — brûlure ou maladie grave.'; sev='bad'; }
+  return { ndvi: +ndvi.toFixed(4), lumi, confidence: conf, healthLabel: hl, healthScore: hs, stress, recommendation: rec, severity: sev, colorName: colorLabel(r,g,b), hex: toHex(r,g,b) };
+}
+
+// ═══════════════════════════════════════
+// CAMERA & VIDEO
+// ═══════════════════════════════════════
+const lv = document.getElementById('lv');
+const ri = document.getElementById('ri');
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d', { willReadFrequently: true });
+
+function stopAll() {
+  if (S.localStream) { S.localStream.getTracks().forEach(t => t.stop()); S.localStream = null; }
+  lv.classList.remove('on'); lv.srcObject = null; lv.src = '';
+  ri.classList.remove('on'); ri.src = '';
+  S.source = { type: null, name: 'Aucune' };
+  S.loopRunning = false;
+  document.getElementById('stageEmpty').style.display = 'flex';
+  updateSrcBadge();
+  toast('Source arrêtée');
+}
+
+async function detectCameras() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    stream.getTracks().forEach(t => t.stop());
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    S.cameras = devices.filter(d => d.kind === 'videoinput');
+    renderCamList();
+    document.getElementById('camListCard').style.display = 'block';
+    // Auto-select DroidCam if found
+    const dc = S.cameras.find(c => /droidcam/i.test(c.label));
+    if (dc) { S.selectedDeviceId = dc.deviceId; renderCamList(); document.getElementById('camStatus').textContent = 'DroidCam détecté et présélectionné — cliquez "Utiliser cette caméra".'; toast('DroidCam détecté ✓'); }
+    else toast(S.cameras.length + ' caméra(s) détectée(s)');
+  } catch { toast('Accès caméra refusé — autorisez dans le navigateur', true); }
+}
+
+function renderCamList() {
+  const el = document.getElementById('camList');
+  if (!S.cameras.length) { el.innerHTML = '<p class="muted">Aucune caméra détectée.</p>'; return; }
+  el.innerHTML = S.cameras.map((c, i) => {
+    const name = c.label || 'Caméra ' + (i + 1);
+    const isDC = /droidcam/i.test(name);
+    const isSel = S.selectedDeviceId === c.deviceId;
+    return `<div class="cam-tile ${isDC ? 'droidcam' : ''} ${isSel ? 'sel' : ''}" onclick="selectCam('${c.deviceId}')">
+      <div class="cn">${name}${isDC ? '<span class="cam-badge rec">DroidCam ✓</span>' : ''}</div>
+      <div class="cm">${isDC ? 'iPhone via DroidCam — recommandé' : 'Caméra système détectée'}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectCam(id) {
+  S.selectedDeviceId = id;
+  renderCamList();
+  const c = S.cameras.find(x => x.deviceId === id);
+  document.getElementById('camStatus').textContent = 'Sélectionnée : ' + (c?.label || 'Inconnue');
+}
+
+async function useSelectedCam() {
+  if (!S.selectedDeviceId) { toast('Sélectionnez une caméra dans la liste', true); return; }
+  await startCamById(S.selectedDeviceId);
+}
+
+async function startDefaultCam() { await startCamById(null); }
+
+async function startCamById(deviceId) {
+  stopAll();
+  try {
+    const constraints = deviceId ? { video: { deviceId: { exact: deviceId } }, audio: false } : { video: true, audio: false };
+    S.localStream = await navigator.mediaDevices.getUserMedia(constraints);
+    lv.srcObject = S.localStream;
+    await lv.play();
+    lv.classList.add('on');
+    const label = S.localStream.getVideoTracks()[0]?.label || 'Caméra';
+    S.source = { type: 'system', name: label.length > 18 ? label.slice(0, 18) + '…' : label };
+    document.getElementById('stageEmpty').style.display = 'none';
+    updateSrcBadge();
+    startLoop();
+    go('analyze');
+    toast('✓ Caméra active : ' + S.source.name);
+  } catch (e) { toast('Impossible d\'activer la caméra : ' + e.message, true); }
+}
+
+function loadFile() {
+  const file = document.getElementById('fileInput').files[0]; if (!file) return;
+  stopAll();
+  const url = URL.createObjectURL(file);
+  if (file.type.startsWith('video/')) {
+    lv.src = url; lv.srcObject = null; lv.loop = true; lv.play(); lv.classList.add('on');
+    S.source = { type: 'file-video', name: file.name.slice(0, 18) };
+  } else {
+    ri.src = url; ri.classList.add('on');
+    S.source = { type: 'file-img', name: file.name.slice(0, 18) };
+  }
+  document.getElementById('stageEmpty').style.display = 'none';
+  updateSrcBadge(); startLoop(); go('analyze');
+  toast('Fichier chargé : ' + file.name.slice(0, 22));
+}
+
+// ═══════════════════════════════════════
+// RENDER LOOP (single instance guard)
+// ═══════════════════════════════════════
+function drawFrame() {
+  const stage = cv.parentElement;
+  cv.width  = Math.max(1, stage.offsetWidth);
+  cv.height = Math.max(1, stage.offsetHeight);
+  if (lv.classList.contains('on') && lv.readyState >= 2) { ctx.drawImage(lv, 0, 0, cv.width, cv.height); return true; }
+  if (ri.classList.contains('on') && ri.naturalWidth > 0)  { ctx.drawImage(ri, 0, 0, cv.width, cv.height); return true; }
+  return false;
+}
+
+function sampleZone() {
+  const W = cv.width, H = cv.height;
+  const sw = Math.max(40, Math.floor(W * 0.22)), sh = Math.max(40, Math.floor(H * 0.22));
+  const sx = Math.floor((W - sw) / 2), sy = Math.floor((H - sh) / 2);
+  let data; try { data = ctx.getImageData(sx, sy, sw, sh).data; } catch { return { r:128,g:128,b:128 }; }
+  let r=0, g=0, b=0, n=0;
+  for (let i = 0; i < data.length; i += 12) { if (data[i+3] < 10) continue; r += data[i]; g += data[i+1]; b += data[i+2]; n++; }
+  if (!n) return { r:128,g:128,b:128 };
+  return { r: Math.round(r/n), g: Math.round(g/n), b: Math.round(b/n) };
+}
+
+function startLoop() {
+  if (S.loopRunning) return;
+  S.loopRunning = true;
+  (function loop() {
+    if (!S.loopRunning) return;
+    const ok = drawFrame();
+    if (ok) {
+      const { r, g, b } = sampleZone();
+      const m = computeMetrics(r, g, b);
+      S.analysis = m;
+      updateAnalysisUI(m);
+    }
+    requestAnimationFrame(loop);
+  })();
+}
+
+// ═══════════════════════════════════════
+// UI UPDATES
+// ═══════════════════════════════════════
+function updateAnalysisUI(m) {
+  const hb = document.getElementById('healthBlock');
+  hb.className = 'health-block ' + m.severity;
+  document.getElementById('hbState').textContent = m.healthLabel;
+  document.getElementById('hbReco').textContent  = m.recommendation;
+  document.getElementById('hbStress').textContent = 'Stress : ' + m.stress;
+  document.getElementById('hbConf').textContent   = 'Confiance : ' + m.confidence + '%';
+  document.getElementById('mColor').textContent  = m.colorName.split('/')[0].trim();
+  document.getElementById('mHex').textContent    = m.hex;
+  document.getElementById('mNdvi').textContent   = m.ndvi.toFixed(3);
+  document.getElementById('mHealth').textContent = m.healthScore + '%';
+  document.getElementById('mHealthLbl').textContent = m.healthLabel;
+  document.getElementById('mLumi').textContent   = m.lumi;
+  document.getElementById('mCardColor').className = 'metric ' + m.severity;
+  document.getElementById('hpSrc').textContent    = S.source.name;
+  document.getElementById('hpMission').textContent = S.activeMission?.title?.slice(0,16) || 'Sans mission';
+  syncHomeMetrics();
+  syncReportUI();
+}
+
+function syncHomeMetrics() {
+  const m = S.analysis;
+  document.getElementById('homeHealth').textContent = m.healthScore != null ? m.healthScore + '%' : '—';
+  document.getElementById('homeHealthLabel').textContent = m.healthLabel;
+  document.getElementById('homeConf').textContent = m.confidence != null ? m.confidence + '%' : '—';
+  document.getElementById('homeHealthCard').className = 'metric ' + (m.severity || '');
+  document.getElementById('homeCov').textContent = S.session.coverage + '%';
+  document.getElementById('homeCaps').textContent = S.session.captures.length;
+}
+
+function syncReportUI() {
+  const m = S.analysis, ms = S.activeMission;
+  document.getElementById('rpAction').textContent = m.recommendation;
+  document.getElementById('rpState').textContent  = m.healthLabel;
+  document.getElementById('rpStress').textContent = m.stress;
+  document.getElementById('rpNdvi').textContent   = m.ndvi != null ? m.ndvi.toFixed(3) : '—';
+  document.getElementById('rpHealth').textContent = m.healthScore != null ? m.healthScore + '%' : '—';
+  document.getElementById('rpConf').textContent   = m.confidence != null ? m.confidence + '%' : '—';
+  document.getElementById('rpCov').textContent    = S.session.coverage + '%';
+  document.getElementById('rpCaps').textContent   = S.session.captures.length;
+  document.getElementById('rpMission').textContent = ms?.title || 'Sans mission';
+  document.getElementById('rpSite').textContent    = ms?.siteName || '—';
+  document.getElementById('rpCrop').textContent    = ms?.cropType || '—';
+}
+
+function updateSrcBadge() {
+  const el = document.getElementById('srcBadge');
+  const name = S.source.name;
+  el.textContent = name.length > 16 ? name.slice(0, 16) + '…' : name;
+  el.className = 'src-badge' + (S.source.type ? ' live' : '');
+}
+
+// ═══════════════════════════════════════
+// CAPTURE + PERSISTENCE
+// ═══════════════════════════════════════
+async function captureReading() {
+  const m = S.analysis;
+  if (m.healthScore == null) { toast('Aucune analyse en cours', true); return; }
+  const now = new Date();
+  const entry = {
+    id: now.getTime().toString(),
+    ts: now.toISOString(),
+    missionId: S.activeMission?.id || null,
+    missionTitle: S.activeMission?.title || null,
+    site: S.activeMission?.siteName || null,
+    crop: S.activeMission?.cropType || null,
+    source: S.source.name,
+    colorName: m.colorName, hex: m.hex,
+    ndvi: m.ndvi, healthScore: m.healthScore, healthLabel: m.healthLabel,
+    stress: m.stress, confidence: m.confidence,
+    recommendation: m.recommendation,
+    lumi: m.lumi, severity: m.severity,
+    captureIndex: S.session.captures.length,
+    altitude: S.mapParams.altitude, overlap: S.mapParams.overlap,
+    speed: S.mapParams.speed, missionType: S.mapParams.missionType,
+  };
+  S.session.captures.unshift(entry);
+  S.session.coverage = Math.min(100, S.session.captures.length * 7);
+  try { await DB.put('captures', entry); } catch (e) { console.warn('DB write failed:', e); }
+  renderMap();
+  renderReportHistory();
+  syncHomeMetrics(); syncReportUI();
+  updateMapStats();
+  toast(`📍 Capture #${S.session.captures.length} — ${m.healthLabel} (${m.healthScore}%)`);
+}
+
+// ═══════════════════════════════════════
+// SPATIAL MAP — Real lawnmower grid
+// ═══════════════════════════════════════
+function computeMapPosition(index) {
+  // Lawnmower pattern: 5 columns, alternate direction per row
+  const COLS = 5;
+  const col = index % COLS;
+  const row = Math.floor(index / COLS);
+  const colPos = row % 2 === 0 ? col : (COLS - 1 - col); // alternate direction
+  const x = 10 + colPos * (80 / (COLS - 1));
+  const y = 15 + row * 14;
+  return { x: Math.min(x, 90), y: Math.min(y, 88) };
+}
+
+function severityColor(sev) {
+  return sev === 'good' ? '#8cbf6c' : sev === 'warn' ? '#d1a05a' : '#ba5a4e';
+}
+
+function renderMap() {
+  const svg = document.getElementById('mapSvg');
+  const caps = S.session.captures.slice().reverse(); // chronological order
+  if (!caps.length) { svg.innerHTML = '<text x="50" y="50" text-anchor="middle" font-size="5" fill="rgba(35,77,50,.4)">Aucune capture</text>'; return; }
+
+  let paths = '', points = '';
+  // Draw flight path lines between consecutive points
+  for (let i = 1; i < caps.length; i++) {
+    const a = computeMapPosition(i - 1);
+    const b = computeMapPosition(i);
+    paths += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="rgba(35,77,50,.3)" stroke-width=".8" stroke-dasharray="2,2"/>`;
+  }
+  // Draw capture points
+  caps.forEach((cap, i) => {
+    const { x, y } = computeMapPosition(i);
+    const col = severityColor(cap.severity);
+    const num = i + 1;
+    points += `<circle cx="${x}" cy="${y}" r="3.5" fill="${col}" stroke="#fff" stroke-width="1.2"/>
+               <text x="${x}" y="${y + 1.2}" text-anchor="middle" dominant-baseline="middle" font-size="2.5" fill="#fff" font-weight="700">${num}</text>`;
+  });
+
+  svg.innerHTML = paths + points;
+}
+
+function updateMapStats() {
+  const caps = S.session.captures;
+  document.getElementById('mapCov').textContent  = S.session.coverage + '%';
+  document.getElementById('mapCaps').textContent = caps.length;
+  if (caps.length) {
+    const avg = caps.reduce((s, c) => s + c.ndvi, 0) / caps.length;
+    document.getElementById('mapNdvi').textContent = avg.toFixed(3);
+  }
+}
+
+function saveMapParams() {
+  S.mapParams = {
+    altitude:    +document.getElementById('mapAlt').value,
+    overlap:     +document.getElementById('mapOv').value,
+    speed:       +document.getElementById('mapSpd').value,
+    missionType: document.getElementById('mapType').value,
+  };
+  LS.set('mapParams', S.mapParams);
+  updateMapCalc();
+  toast('Paramètres mission enregistrés ✓');
+}
+
+function updateMapCalc() {
+  const alt = S.mapParams.altitude, ov = S.mapParams.overlap, spd = S.mapParams.speed;
+  const gsd   = (alt * 0.7) / 100;
+  const strip = Math.round(gsd * 4000 * (1 - ov / 100));
+  document.getElementById('mapCalcText').textContent = `GSD ≈ ${(gsd*100).toFixed(1)} mm/px · Bande ≈ ${strip} m · Vitesse ${spd} m/s`;
+}
+
+// ═══════════════════════════════════════
+// MISSIONS (IndexedDB)
+// ═══════════════════════════════════════
+function showMissionForm() { document.getElementById('missionFormCard').style.display = 'block'; }
+function hideMissionForm() { document.getElementById('missionFormCard').style.display = 'none'; }
+
+async function createMission() {
+  const title = document.getElementById('fTitle').value.trim();
+  if (!title) { toast('Entrez un titre de mission', true); return; }
+  const mission = {
+    id: Date.now().toString(),
+    title, type: document.getElementById('fType').value,
+    siteName: document.getElementById('fSite').value.trim() || '—',
+    cropType: document.getElementById('fCrop').value,
+    operator: document.getElementById('fOperator').value.trim() || '—',
+    notes: document.getElementById('fNotes').value.trim(),
+    createdAt: new Date().toISOString(),
+  };
+  await DB.put('missions', mission);
+  S.activeMission = mission;
+  LS.set('activeMissionId', mission.id);
+  hideMissionForm();
+  ['fTitle','fSite','fOperator','fNotes'].forEach(id => document.getElementById(id).value = '');
+  refreshMissionList();
+  updateHomeMissionBanner();
+  toast('Mission "' + title + '" créée ✓');
+}
+
+async function refreshMissionList() {
+  let missions = []; try { missions = await DB.getAll('missions'); } catch {}
+  missions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const el = document.getElementById('missionListEl');
+  if (!missions.length) { el.innerHTML = '<p class="muted" style="padding:0 2px">Aucune mission. Créez-en une ci-dessus.</p>'; return; }
+  el.innerHTML = missions.map(m => `
+    <div class="mission-item" onclick="setActiveMission('${m.id}')">
+      <div class="mi-icon">${m.type==='mapping'?'🗺️':'🔬'}</div>
+      <div class="mi-body">
+        <div class="mi-name">${m.title}</div>
+        <div class="mi-meta">${m.cropType} · ${m.siteName} · ${new Date(m.createdAt).toLocaleDateString('fr-BE')}</div>
+      </div>
+      ${S.activeMission?.id===m.id ? '<div class="mi-active-badge">Active</div>' : ''}
+    </div>
+  `).join('');
+}
+
+async function setActiveMission(id) {
+  let missions = []; try { missions = await DB.getAll('missions'); } catch {}
+  const m = missions.find(x => x.id === id);
+  if (m) { S.activeMission = m; LS.set('activeMissionId', m.id); refreshMissionList(); updateHomeMissionBanner(); toast('Mission "' + m.title + '" active ✓'); go('analyze'); }
+}
+
+function updateHomeMissionBanner() {
+  const banner = document.getElementById('homeMissionBanner');
+  const m = S.activeMission;
+  if (m) {
+    banner.style.display = 'flex';
+    document.getElementById('homeMissionName').textContent = m.title;
+    document.getElementById('homeMissionMeta').textContent = m.cropType + ' · ' + m.siteName + ' · ' + new Date(m.createdAt).toLocaleDateString('fr-BE');
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+// ═══════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════
+async function loadHistory() {
+  let caps = []; try { caps = await DB.getAll('captures'); } catch {}
+  caps.sort((a, b) => new Date(b.ts) - new Date(a.ts));
+  const el = document.getElementById('historyList');
+  if (!caps.length) { el.innerHTML = '<p class="muted" style="padding:0 16px">Aucune capture sauvegardée.</p>'; return; }
+  el.innerHTML = caps.slice(0, 50).map(c => `
+    <div class="hist-item">
+      <div class="hist-swatch" style="background:${c.hex}"></div>
+      <div class="hist-body">
+        <div class="hist-name">${c.colorName.split('/')[0].trim()}</div>
+        <div class="hist-meta">${c.healthLabel} · Stress ${c.stress}${c.missionTitle ? ' · ' + c.missionTitle.slice(0,14) : ''}</div>
+      </div>
+      <div class="hist-right">
+        <div class="hist-ndvi">NDVI ${c.ndvi}</div>
+        <div class="hist-time">${new Date(c.ts).toLocaleTimeString('fr-BE',{hour:'2-digit',minute:'2-digit'})}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderReportHistory() {
+  const el = document.getElementById('reportHistory');
+  const caps = S.session.captures.slice(0, 8);
+  if (!caps.length) { el.innerHTML = '<p class="muted">Aucune capture cette session.</p>'; return; }
+  el.innerHTML = caps.map(c => `
+    <div class="hist-item">
+      <div class="hist-swatch" style="background:${c.hex}"></div>
+      <div class="hist-body">
+        <div class="hist-name">${c.colorName.split('/')[0].trim()}</div>
+        <div class="hist-meta">${c.healthLabel} · NDVI ${c.ndvi}</div>
+      </div>
+      <div class="hist-right">
+        <div class="hist-ndvi">${c.healthScore}%</div>
+        <div class="hist-time">${new Date(c.ts).toLocaleTimeString('fr-BE',{hour:'2-digit',minute:'2-digit'})}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function clearHistory() {
+  if (!confirm('Effacer tout l\'historique ? Action irréversible.')) return;
+  try { await DB.clear('captures'); } catch {}
+  S.session.captures = []; S.session.coverage = 0;
+  loadHistory(); renderMap(); updateMapStats(); syncHomeMetrics(); syncReportUI();
+  toast('Historique effacé');
+}
+
+// ═══════════════════════════════════════
+// REPORT & EXPORT
+// ═══════════════════════════════════════
+function buildReportText() {
+  const m = S.analysis, ms = S.activeMission, caps = S.session.captures;
+  const now = new Date().toLocaleString('fr-BE');
+  return [
+    '═══ ARTI-AIRLINK — AGROVISION V4 ═══',
+    'Rapport généré le : ' + now,
+    '',
+    '── Mission ──',
+    'Titre        : ' + (ms?.title || 'Sans mission'),
+    'Site         : ' + (ms?.siteName || '—'),
+    'Culture      : ' + (ms?.cropType || '—'),
+    'Opérateur    : ' + (ms?.operator || '—'),
+    'Type mission : ' + (ms?.type || '—'),
+    '',
+    '── Analyse végétale ──',
+    'Couleur      : ' + m.colorName,
+    'HEX          : ' + m.hex,
+    'NDVI         : ' + (m.ndvi?.toFixed(4) || '—'),
+    'Santé        : ' + m.healthScore + '% (' + m.healthLabel + ')',
+    'Stress       : ' + m.stress,
+    'Luminosité   : ' + m.lumi + '/255',
+    'Confiance    : ' + m.confidence + '%',
+    '',
+    '── Recommandation ──',
+    m.recommendation,
+    '',
+    '── Mission drone ──',
+    'Altitude     : ' + S.mapParams.altitude + ' m',
+    'Recouvrement : ' + S.mapParams.overlap + '%',
+    'Vitesse      : ' + S.mapParams.speed + ' m/s',
+    'Type         : ' + S.mapParams.missionType,
+    'Couverture   : ' + S.session.coverage + '%',
+    'Captures     : ' + S.session.captures.length,
+    '',
+    '── Historique session ──',
+    ...caps.slice(0, 10).map((c, i) =>
+      `${i+1}. ${new Date(c.ts).toLocaleTimeString('fr-BE')} | ${c.colorName.split('/')[0].trim()} | NDVI ${c.ndvi} | ${c.healthLabel}`
+    ),
+    '',
+    'Équipe Arti — Section Drone & Innovation',
+    'Belgique → RDC — Arti-AirLink AgroVision',
+  ].join('\n');
+}
+
+function openReportModal() {
+  const text = buildReportText();
+  document.getElementById('modalDate').textContent = new Date().toLocaleString('fr-BE');
+  document.getElementById('modalContent').textContent = text;
+  document.getElementById('reportModal').classList.add('show');
+}
+function closeModal() { document.getElementById('reportModal').classList.remove('show'); }
+function downloadReport() {
+  const blob = new Blob([buildReportText()], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'agrovision-rapport-' + new Date().toISOString().slice(0, 10) + '.txt';
+  a.click(); toast('Rapport téléchargé ✓');
+}
+
+async function exportCSV() {
+  let caps = []; try { caps = await DB.getAll('captures'); } catch {}
+  caps.sort((a, b) => new Date(b.ts) - new Date(a.ts));
+  if (!caps.length) { toast('Aucune capture à exporter', true); return; }
+  const header = 'Heure,Mission,Site,Culture,Couleur,Hex,NDVI,Santé%,État,Stress,Confiance%,Luminosité,Altitude,Recommandation';
+  const rows = caps.map(c => [
+    new Date(c.ts).toLocaleString('fr-BE'),
+    c.missionTitle || '', c.site || '', c.crop || '',
+    '"' + c.colorName + '"', c.hex,
+    c.ndvi, c.healthScore, c.healthLabel, c.stress, c.confidence, c.lumi, c.altitude,
+    '"' + c.recommendation + '"'
+  ].join(','));
+  const blob = new Blob([header + '\n' + rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'agrovision-captures-' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click(); toast('CSV exporté (' + caps.length + ' captures)');
+}
+
+function resetSession() {
+  if (!confirm('Réinitialiser la session en cours ? Les données IndexedDB sont conservées.')) return;
+  S.session = { captures: [], coverage: 0 };
+  renderMap(); updateMapStats(); renderReportHistory(); syncHomeMetrics(); syncReportUI();
+  document.getElementById('mapCov').textContent  = '0%';
+  document.getElementById('mapCaps').textContent = '0';
+  document.getElementById('mapNdvi').textContent = '—';
+  toast('Session réinitialisée — historique DB conservé');
+}
+
+// ═══════════════════════════════════════
+// ROUTER
+// ═══════════════════════════════════════
+const TITLES = { home:'Accueil', missions:'Missions', connect:'Caméra / DroidCam', analyze:'Analyse', map:'Carte mission', report:'Rapport', history:'Historique' };
+
+function go(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + screen));
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.s === screen));
+  document.getElementById('screenTitle').textContent = TITLES[screen] || screen;
+  if (screen === 'map')      { renderMap(); updateMapStats(); updateMapCalc(); }
+  if (screen === 'report')   { renderReportHistory(); syncReportUI(); }
+  if (screen === 'history')  loadHistory();
+  if (screen === 'missions') refreshMissionList();
+  if (screen === 'home')     { syncHomeMetrics(); updateHomeMissionBanner(); }
+}
+
+// ═══════════════════════════════════════
+// TOAST & UTILS
+// ═══════════════════════════════════════
+function toast(msg, isErr = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = isErr ? '#ba5a4e' : '#234d32';
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ═══════════════════════════════════════
+// PWA INSTALL
+// ═══════════════════════════════════════
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  document.getElementById('installBar').classList.add('show');
+});
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('installBar').classList.remove('show');
+  toast('AgroVision installé sur votre appareil ✓');
+});
+document.getElementById('dismissInstall').addEventListener('click', () =>
+  document.getElementById('installBar').classList.remove('show')
+);
+
+// Modal click-outside to close
+document.getElementById('reportModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('reportModal')) closeModal();
+});
+
+// ═══════════════════════════════════════
+// INIT — Restore state from IndexedDB
+// ═══════════════════════════════════════
+async function init() {
+  await DB.open();
+
+  // Restore active mission from last session
+  const savedMissionId = LS.get('activeMissionId', null);
+  if (savedMissionId) {
+    try {
+      const m = await DB.get('missions', savedMissionId);
+      if (m) S.activeMission = m;
+    } catch {}
+  }
+
+  // Restore session captures from DB (today's session)
+  try {
+    const allCaps = await DB.getAll('captures');
+    const today = new Date().toDateString();
+    S.session.captures = allCaps
+      .filter(c => new Date(c.ts).toDateString() === today)
+      .sort((a, b) => new Date(b.ts) - new Date(a.ts));
+    S.session.coverage = Math.min(100, S.session.captures.length * 7);
+  } catch {}
+
+  // Restore map params
+  const savedParams = LS.get('mapParams', null);
+  if (savedParams) {
+    S.mapParams = savedParams;
+    document.getElementById('mapAlt').value  = S.mapParams.altitude;
+    document.getElementById('mapOv').value   = S.mapParams.overlap;
+    document.getElementById('mapSpd').value  = S.mapParams.speed;
+    document.getElementById('mapType').value = S.mapParams.missionType;
+  }
+
+  updateMapCalc();
+  updateHomeMissionBanner();
+  syncHomeMetrics();
+  renderMap();
+  updateMapStats();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  }
+
+  toast('AgroVision V4 prête — données restaurées ✓');
+}
+
+init();
+</script>
+</body>
+</html>

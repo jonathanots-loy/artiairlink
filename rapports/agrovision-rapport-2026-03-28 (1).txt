@@ -1,0 +1,43 @@
+═══ ARTI-AIRLINK — AGROVISION PWA V1 ═══
+Rapport généré le : 28/03/2026 21:29:55
+
+Mission          : Session libre
+Culture          : Non renseignée
+Site             : —
+Opérateur        : —
+Mode             : Inspection
+Source           : local
+Zone             : center
+
+── Analyse végétale ──
+Couleur dominante: Sol intermédiaire
+Hex              : #808080
+NDVI simplifié   : 0.0000
+Santé végétale   : 34% (Stress fort)
+Niveau de stress : Élevé
+Luminosité       : 128/255
+Confiance signal : 35%
+
+── Recommandation ──
+Inspection terrain recommandée — risque de perte de rendement.
+
+── Mission drone ──
+Altitude         : 30 m
+Recouvrement     : 75%
+Vitesse          : 4 m/s
+Type mission     : Lawnmower
+Captures session : 77
+Couverture       : 100%
+
+── Historique captures ──
+1. 21:29:35 — Vert sain — NDVI 0.1856 — Correct
+2. 21:29:35 — Vert sain — NDVI 0.1856 — Correct
+3. 21:29:35 — Vert sain — NDVI 0.1828 — Correct
+4. 21:29:35 — Vert sain — NDVI 0.1828 — Correct
+5. 21:29:34 — Vert sain — NDVI 0.1811 — Correct
+6. 21:29:34 — Vert sain — NDVI 0.1723 — Correct
+7. 21:29:33 — Vert sain — NDVI 0.1154 — Stress léger
+8. 21:29:33 — Vert sain — NDVI 0.1154 — Stress léger
+
+Équipe Arti — Section Drone & Innovation
+Belgique → RDC — Arti-AirLink AgroVision
