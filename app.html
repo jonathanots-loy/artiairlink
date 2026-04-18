@@ -574,8 +574,8 @@ textarea{min-height:80px;resize:vertical}
     <div class="section-title">Centre GPS du champ</div>
     <p class="section-sub" style="margin-bottom:10px">Entrez les coordonnées du centre de la parcelle pour la vue terrain.</p>
     <div class="gps-row">
-      <div class="field"><label>Latitude</label><input type="number" id="gpsLat" step="0.0001" placeholder="50.5950"></div>
-      <div class="field"><label>Longitude</label><input type="number" id="gpsLon" step="0.0001" placeholder="3.9120"></div>
+      <div class="field"><label>Latitude</label><input type="number" id="gpsLat" step="0.0001" placeholder="ex: 4.3250"></div>
+      <div class="field"><label>Longitude</label><input type="number" id="gpsLon" step="0.0001" placeholder="ex: 15.3220"></div>
       <button class="bp" onclick="saveCenterGPS()">📍 Définir</button>
     </div>
     <div class="row">
@@ -702,7 +702,7 @@ const S = {
   loopRunning: false,
   selectedIndex: 'VARI',
   mapParams: { altitude: 30, overlap: 75, speed: 4, missionType: 'Lawnmower' },
-  mapCenter: { lat: 50.595, lon: 3.912 },
+  mapCenter: null,
   mapView: 'grid',
 };
 let toastTimer = null, deferredPrompt = null;
@@ -1449,12 +1449,12 @@ function initLeafletMap() {
     attribution: '© OpenStreetMap'
   }).addTo(_lfMap);
   L.control.attribution({ prefix: '© <a href="https://openstreetmap.org">OSM</a>' }).addTo(_lfMap);
-  _lfMap.setView([S.mapCenter.lat, S.mapCenter.lon], 17);
+  const c = S.mapCenter;
+  _lfMap.setView(c ? [c.lat, c.lon] : [0, 0], c ? 17 : 2);
 }
 
 function renderLeafletMap() {
   if (!_lfMap) return;
-  // Clear previous layers
   _lfLayers.forEach(l => _lfMap.removeLayer(l));
   _lfLayers = [];
 
@@ -1462,6 +1462,10 @@ function renderLeafletMap() {
   const { altitude: alt, overlap: ov } = S.mapParams;
   const center = S.mapCenter;
 
+  if (!center) {
+    toast('Définissez d\'abord les coordonnées GPS du champ ↓', true);
+    return;
+  }
   if (!caps.length) {
     _lfMap.setView([center.lat, center.lon], 17);
     return;
@@ -1538,6 +1542,7 @@ function renderLeafletMap() {
 function exportGeoJSON() {
   const caps = S.session.captures;
   if (!caps.length) { toast('Aucune capture à exporter', true); return; }
+  if (!S.mapCenter) { toast('Définissez d\'abord le centre GPS du champ', true); return; }
   const { altitude: alt, overlap: ov } = S.mapParams;
   const center = S.mapCenter;
   const footprintM = alt * 28;
