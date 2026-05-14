@@ -399,44 +399,14 @@ textarea{min-height:80px;resize:vertical}
   <div id="missionListEl"></div>
 </section>
 
-<!-- ── CAMERA / DROIDCAM ── -->
+<!-- ── CAMERA ── -->
 <section class="screen" id="screen-connect">
-  <div class="card" style="background:linear-gradient(135deg,#edf6fb,#e0f0f8);border-color:rgba(110,178,223,.35)">
-    <div class="section-title">📱 iPhone via DroidCam — Méthode unique</div>
-    <p class="section-sub">La seule méthode qui fonctionne : DroidCam connecte l'iPhone comme une vraie webcam système, visible directement par le navigateur.</p>
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-body">
-          <div class="step-title">Installer DroidCam sur les deux appareils</div>
-          <div class="step-desc">App Store (iPhone) + client Windows/Mac/Linux sur l'ordinateur.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-body">
-          <div class="step-title">Connecter via le client DroidCam sur le PC</div>
-          <div class="step-desc">Entrez l'IP affichée sur l'iPhone dans le client PC et cliquez "Connect". L'iPhone peut être sur le même Wi-Fi ou en USB.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-body">
-          <div class="step-title">Détecter les caméras dans AgroVision</div>
-          <div class="step-desc">Cliquez sur "Détecter les caméras" ci-dessous. DroidCam apparaîtra dans la liste.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-body">
-          <div class="step-title">Sélectionner DroidCam et activer</div>
-          <div class="step-desc">Cliquez sur la tuile DroidCam (surlignée en bleu) puis sur "Utiliser cette caméra".</div>
-        </div>
-      </div>
-    </div>
+  <div class="card">
+    <div class="section-title">📷 Source d'image</div>
+    <p class="section-sub">Activez la caméra du téléphone pour analyser en direct, ou importez des photos prises par drone.</p>
     <div class="row" style="margin-top:12px">
-      <button class="bp" onclick="detectCameras()">🔍 Détecter les caméras</button>
-      <button class="bg" onclick="startDefaultCam()">Caméra par défaut</button>
+      <button class="bp" onclick="startDefaultCam()">📷 Caméra du téléphone</button>
+      <button class="bg" onclick="detectCameras()">🔍 Détecter d'autres caméras</button>
       <button class="bd" onclick="stopAll()">⏹ Stop</button>
     </div>
   </div>
@@ -576,9 +546,12 @@ textarea{min-height:80px;resize:vertical}
   <div class="card">
     <div class="section-title">Centre GPS du champ</div>
     <p class="section-sub" style="margin-bottom:10px">Entrez les coordonnées du centre de la parcelle pour la vue terrain.</p>
+    <div class="row" style="margin-bottom:10px">
+      <button class="bp btn-full" onclick="autoLocateGPS()">📡 Me localiser automatiquement</button>
+    </div>
     <div class="gps-row">
-      <div class="field"><label>Latitude</label><input type="number" id="gpsLat" step="0.0001" placeholder="ex: 4.3250"></div>
-      <div class="field"><label>Longitude</label><input type="number" id="gpsLon" step="0.0001" placeholder="ex: 15.3220"></div>
+      <div class="field"><label>Latitude</label><input type="number" id="gpsLat" step="0.0001" placeholder="ex: 2.0361"></div>
+      <div class="field"><label>Longitude</label><input type="number" id="gpsLon" step="0.0001" placeholder="ex: 23.6500"></div>
       <button class="bp" onclick="saveCenterGPS()">📍 Définir</button>
     </div>
     <div class="row">
@@ -1448,6 +1421,20 @@ function healthToColor(h) {
   return '#e53935';
 }
 
+function autoLocateGPS() {
+  if (!navigator.geolocation) { toast('GPS non disponible sur cet appareil', true); return; }
+  toast('Localisation en cours…');
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      document.getElementById('gpsLat').value = pos.coords.latitude.toFixed(6);
+      document.getElementById('gpsLon').value = pos.coords.longitude.toFixed(6);
+      toast('Position GPS détectée ✓');
+    },
+    () => toast('Impossible d\'obtenir la position GPS', true),
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
 function saveCenterGPS() {
   const lat = parseFloat(document.getElementById('gpsLat').value);
   const lon = parseFloat(document.getElementById('gpsLon').value);
@@ -1851,7 +1838,7 @@ function resetSession() {
 // ═══════════════════════════════════════
 // ROUTER
 // ═══════════════════════════════════════
-const TITLES = { home:'Accueil', missions:'Missions', connect:'Caméra / DroidCam', analyze:'Analyse', map:'Carte mission', report:'Rapport', history:'Historique' };
+const TITLES = { home:'Accueil', missions:'Missions', connect:'Caméra', analyze:'Analyse', map:'Carte mission', report:'Rapport', history:'Historique' };
 
 function go(screen) {
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + screen));
