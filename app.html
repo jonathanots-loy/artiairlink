@@ -319,7 +319,7 @@ textarea{min-height:80px;resize:vertical}
     <div class="section-title" style="font-size:22px;letter-spacing:-.04em">AgroVision</div>
     <p class="section-sub">Diagnostic végétal par drone — persistance complète, cartographie réelle, rapports exportables.</p>
     <div class="row">
-      <button class="bp" onclick="go('connect')">📷 Caméra DroidCam</button>
+      <button class="bp" onclick="go('connect')">📷 Caméra</button>
       <button class="bg" onclick="go('missions')">🗂️ Missions</button>
     </div>
   </div>
@@ -338,15 +338,6 @@ textarea{min-height:80px;resize:vertical}
     <div class="metric"><div class="k">Captures session</div><div class="v" id="homeCaps">0</div><div class="s">Enregistrées</div></div>
   </div>
 
-  <div class="card">
-    <div class="section-title">Accès rapide</div>
-    <div class="grid g2">
-      <button class="bp" onclick="go('analyze')">🔬 Analyse</button>
-      <button class="bs" onclick="go('map')">🗺️ Carte mission</button>
-      <button class="bg" onclick="go('report')">📋 Rapport</button>
-      <button class="bg" onclick="go('history')">🕐 Historique</button>
-    </div>
-  </div>
 </section>
 
 <!-- ── MISSIONS ── -->
@@ -402,12 +393,14 @@ textarea{min-height:80px;resize:vertical}
 <!-- ── CAMERA ── -->
 <section class="screen" id="screen-connect">
   <div class="card">
-    <div class="section-title">📷 Source d'image</div>
-    <p class="section-sub">Activez la caméra du téléphone pour analyser en direct, ou importez des photos prises par drone.</p>
-    <div class="row" style="margin-top:12px">
-      <button class="bp" onclick="startDefaultCam()">📷 Caméra du téléphone</button>
-      <button class="bg" onclick="detectCameras()">🔍 Détecter d'autres caméras</button>
-      <button class="bd" onclick="stopAll()">⏹ Stop</button>
+    <div class="section-title">📷 Choisir une caméra</div>
+    <p class="section-sub">Sélectionnez la caméra à utiliser pour l'analyse en direct.</p>
+    <div class="grid g2" style="margin-top:12px">
+      <button class="bp" onclick="startFacingCam('environment')">🔭 Caméra arrière</button>
+      <button class="bg" onclick="startFacingCam('user')">🤳 Caméra avant</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="bs btn-full" onclick="detectCameras()">🔍 Voir toutes les caméras disponibles</button>
     </div>
   </div>
 
@@ -415,19 +408,19 @@ textarea{min-height:80px;resize:vertical}
     <div class="section-title">Caméras disponibles</div>
     <div class="cam-list" id="camList"></div>
     <div class="row" style="margin-top:12px">
-      <button class="bs" onclick="useSelectedCam()">▶ Utiliser cette caméra</button>
+      <button class="bp" onclick="useSelectedCam()">▶ Utiliser cette caméra</button>
+      <button class="bd" onclick="stopAll()">⏹ Stop</button>
     </div>
     <p class="muted" id="camStatus" style="margin-top:10px;margin-bottom:0">Aucune caméra sélectionnée.</p>
   </div>
 
   <div class="card">
-    <div class="section-title">Autres sources</div>
-    <div class="field"><label>Import image / vidéo drone</label>
+    <div class="section-title">📁 Import photo / vidéo drone</div>
+    <div class="field">
       <input type="file" id="fileInput" accept="image/*,video/*">
     </div>
     <div class="row">
       <button class="bg" onclick="loadFile()">Charger le fichier</button>
-      <button class="bd" onclick="stopAll()">⏹ Couper toute source</button>
     </div>
   </div>
 </section>
@@ -448,7 +441,7 @@ textarea{min-height:80px;resize:vertical}
       <div class="stage-empty" id="stageEmpty">
         <div class="ei">📡</div>
         <h4>Aucune source active</h4>
-        <p>Activez DroidCam ou une autre source dans l'onglet Caméra.</p>
+        <p>Activez une caméra ou importez une photo dans l'onglet Caméra.</p>
         <button class="bg" style="margin-top:4px;font-size:12px" onclick="go('connect')">→ Aller à Caméra</button>
       </div>
     </div>
@@ -1091,10 +1084,7 @@ async function detectCameras() {
     S.cameras = devices.filter(d => d.kind === 'videoinput');
     renderCamList();
     document.getElementById('camListCard').style.display = 'block';
-    // Auto-select DroidCam if found
-    const dc = S.cameras.find(c => /droidcam/i.test(c.label));
-    if (dc) { S.selectedDeviceId = dc.deviceId; renderCamList(); document.getElementById('camStatus').textContent = 'DroidCam détecté et présélectionné — cliquez "Utiliser cette caméra".'; toast('DroidCam détecté ✓'); }
-    else toast(S.cameras.length + ' caméra(s) détectée(s)');
+    toast(S.cameras.length + ' caméra(s) détectée(s)');
   } catch { toast('Accès caméra refusé — autorisez dans le navigateur', true); }
 }
 
@@ -1103,11 +1093,10 @@ function renderCamList() {
   if (!S.cameras.length) { el.innerHTML = '<p class="muted">Aucune caméra détectée.</p>'; return; }
   el.innerHTML = S.cameras.map((c, i) => {
     const name = c.label || 'Caméra ' + (i + 1);
-    const isDC = /droidcam/i.test(name);
     const isSel = S.selectedDeviceId === c.deviceId;
-    return `<div class="cam-tile ${isDC ? 'droidcam' : ''} ${isSel ? 'sel' : ''}" onclick="selectCam('${c.deviceId}')">
-      <div class="cn">${name}${isDC ? '<span class="cam-badge rec">DroidCam ✓</span>' : ''}</div>
-      <div class="cm">${isDC ? 'iPhone via DroidCam — recommandé' : 'Caméra système détectée'}</div>
+    return `<div class="cam-tile ${isSel ? 'sel' : ''}" onclick="selectCam('${c.deviceId}')">
+      <div class="cn">${name}</div>
+      <div class="cm">Caméra système détectée</div>
     </div>`;
   }).join('');
 }
@@ -1125,6 +1114,23 @@ async function useSelectedCam() {
 }
 
 async function startDefaultCam() { await startCamById(null); }
+
+async function startFacingCam(facing) {
+  stopAll();
+  try {
+    S.localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing }, audio: false });
+    lv.srcObject = S.localStream;
+    await lv.play();
+    lv.classList.add('on');
+    const label = S.localStream.getVideoTracks()[0]?.label || (facing === 'environment' ? 'Caméra arrière' : 'Caméra avant');
+    S.source = { type: 'system', name: label.length > 18 ? label.slice(0, 18) + '…' : label };
+    document.getElementById('stageEmpty').style.display = 'none';
+    updateSrcBadge();
+    startLoop();
+    go('analyze');
+    toast('✓ ' + (facing === 'environment' ? 'Caméra arrière' : 'Caméra avant') + ' active');
+  } catch (e) { toast('Impossible d\'activer la caméra : ' + e.message, true); }
+}
 
 async function startCamById(deviceId) {
   stopAll();
