@@ -562,9 +562,9 @@ textarea{min-height:80px;resize:vertical}
   <div class="card">
     <div class="section-title">Paramètres mission</div>
     <div class="grid g2">
-      <div class="field"><label>Altitude (m)</label><input type="number" id="mapAlt" value="30" min="5" max="400"></div>
-      <div class="field"><label>Recouvrement (%)</label><input type="number" id="mapOv" value="75" min="30" max="95"></div>
-      <div class="field"><label>Vitesse (m/s)</label><input type="number" id="mapSpd" value="4" min="1" max="15"></div>
+      <div class="field"><label>Altitude (m)</label><input type="number" id="mapAlt" value="30" min="5" max="400" oninput="liveMapCalc()"></div>
+      <div class="field"><label>Recouvrement (%)</label><input type="number" id="mapOv" value="75" min="30" max="95" oninput="liveMapCalc()"></div>
+      <div class="field"><label>Vitesse (m/s)</label><input type="number" id="mapSpd" value="4" min="1" max="15" oninput="liveMapCalc()"></div>
       <div class="field"><label>Type mission</label>
         <select id="mapType"><option>Lawnmower</option><option>Orbital</option><option>Scan ciblé</option></select>
       </div>
@@ -1362,11 +1362,22 @@ function saveMapParams() {
   toast('Paramètres mission enregistrés ✓');
 }
 
+function liveMapCalc() {
+  const alt = +document.getElementById('mapAlt').value || 30;
+  const ov  = +document.getElementById('mapOv').value  || 75;
+  const spd = +document.getElementById('mapSpd').value || 4;
+  const gsd   = (alt * 0.7) / 100;
+  const strip = Math.round(gsd * 4000 * (1 - ov / 100));
+  document.getElementById('mapCalcText').textContent =
+    `Précision ≈ ${(gsd*100).toFixed(1)} mm/px · Largeur de bande ≈ ${strip} m · Vitesse ${spd} m/s`;
+}
+
 function updateMapCalc() {
   const alt = S.mapParams.altitude, ov = S.mapParams.overlap, spd = S.mapParams.speed;
   const gsd   = (alt * 0.7) / 100;
   const strip = Math.round(gsd * 4000 * (1 - ov / 100));
-  document.getElementById('mapCalcText').textContent = `GSD ≈ ${(gsd*100).toFixed(1)} mm/px · Bande ≈ ${strip} m · Vitesse ${spd} m/s`;
+  document.getElementById('mapCalcText').textContent =
+    `Précision ≈ ${(gsd*100).toFixed(1)} mm/px · Largeur de bande ≈ ${strip} m · Vitesse ${spd} m/s`;
 }
 
 // ═══════════════════════════════════════
