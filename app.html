@@ -141,6 +141,11 @@ textarea{min-height:80px;resize:vertical}
   color:#e8f4ea;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:700}
 .stage-empty{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:10px;background:rgba(14,30,20,.88);color:#c5dcc8;text-align:center;padding:20px}
+.stage-capture{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:6;
+  width:62px;height:62px;border-radius:50%;background:#234d32;border:3px solid rgba(255,255,255,.85);
+  font-size:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  box-shadow:0 4px 16px rgba(0,0,0,.45);transition:transform .1s,background .1s}
+.stage-capture:active{transform:translateX(-50%) scale(.92);background:#1a3a24}
 .stage-empty .ei{font-size:48px}
 .stage-empty h4{margin:0;font-size:16px;color:#fff}
 .stage-empty p{margin:0;font-size:13px;max-width:200px}
@@ -438,6 +443,7 @@ textarea{min-height:80px;resize:vertical}
       <img id="ri" alt="">
       <canvas id="cv"></canvas>
       <div class="focus-ring" id="focusRing"></div>
+      <button class="stage-capture" onclick="captureReading()" title="Capturer">📍</button>
       <div class="stage-empty" id="stageEmpty">
         <div class="ei">📡</div>
         <h4>Aucune source active</h4>
@@ -486,7 +492,6 @@ textarea{min-height:80px;resize:vertical}
   </div>
 
   <div class="row">
-    <button class="bp" onclick="captureReading()">📍 Capturer</button>
     <button class="bs" onclick="go('map')">🗺️ Voir carte</button>
     <button class="bg" onclick="go('report')">📋 Rapport</button>
   </div>
