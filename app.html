@@ -381,6 +381,9 @@ textarea{min-height:80px;resize:vertical}
           <option value="tomate">🍅 Tomate</option>
           <option value="banane">🍌 Banane</option>
           <option value="agrumes">🍊 Agrumes</option>
+          <option value="arachide">🥜 Arachides</option>
+          <option value="courge">🎃 Courges</option>
+          <option value="potager">🥬 Potager</option>
           <option value="autre">🌱 Autre</option>
         </select>
       </div>
@@ -886,6 +889,39 @@ const CROPS = {
           severe:'Risque élevé de HLB ou tristeza — prélèvement et analyse recommandés.',
           critical:'Intervention urgente — greening avancé ou gommose sévère.' }
   },
+  arachide: {
+    name:'Arachides', emoji:'🥜', type:'green', index:'GLI',
+    hueRange:[88,140], satMin:0.20,
+    thresholds:{ excellent:0.16, good:0.07, stress:0.02, severe:-0.04 },
+    diseases:['Cercosporiose (taches circulaires brun-rouge sur feuilles)','Rosette virale (rabougrissement + jaunissement mosaïque)','Rouille (Puccinia arachidis — pustules orangées sous feuille)'],
+    rec:{ excellent:'Arachides en pleine vigueur — surveiller l\'humidité du sol à la floraison.',
+          good:'Croissance normale — vérifier nodulation et apport de soufre.',
+          stress:'Jaunissement partiel — contrôler déficit hydrique ou carence K/S.',
+          severe:'Stress élevé — inspecter pour cercosporiose ou rosette virale.',
+          critical:'Intervention urgente — rosette avancée ou rouille sévère probable.' }
+  },
+  courge: {
+    name:'Courges', emoji:'🎃', type:'green', index:'ExG',
+    hueRange:[90,145], satMin:0.22,
+    thresholds:{ excellent:0.17, good:0.08, stress:0.02, severe:-0.04 },
+    diseases:['Faux mildiou cucurbitacé (Pseudoperonospora — taches angulaires jaunes)','Mosaïque CMV (déformation + jaunissement foliaire)','Oïdium (poudre blanche sur face supérieure des feuilles)'],
+    rec:{ excellent:'Courges saines — surveiller l\'humidité pour prévenir l\'oïdium.',
+          good:'Végétation correcte — vérifier apport en potassium à la fructification.',
+          stress:'Jaunissement visible — contrôler irrigation et vérifier carence N/Mg.',
+          severe:'Probable faux mildiou ou CMV — inspection des feuilles requise.',
+          critical:'Intervention urgente — oïdium sévère ou virus mosaïque avancé.' }
+  },
+  potager: {
+    name:'Potager', emoji:'🥬', type:'green', index:'VARI',
+    hueRange:[88,145], satMin:0.18,
+    thresholds:{ excellent:0.15, good:0.07, stress:0.01, severe:-0.05 },
+    diseases:['Fonte des semis (Pythium/Rhizoctonia — jeunes plants qui s\'affaissent)','Pucerons et aleurodes (jaunissement + miellat collant)','Alternaria (taches concentriques brunes sur feuilles âgées)'],
+    rec:{ excellent:'Potager en bonne santé — arrosage régulier et désherbage recommandés.',
+          good:'État correct — vérifier l\'homogénéité et surveiller les ravageurs.',
+          stress:'Stress modéré — contrôler l\'irrigation et les carences de base (N, K).',
+          severe:'Stress fort — inspecter pour pucerons, fonte ou carence avancée.',
+          critical:'Intervention urgente — maladie cryptogamique ou infestation de ravageurs.' }
+  },
   autre: {
     name:'Culture', emoji:'🌱', type:'green', index:'VARI',
     hueRange:[85,145], satMin:0.16,
@@ -914,7 +950,7 @@ const INDEX_DEF = {
 const CROP_BEST_INDEX = {
   mais:'GRVI', manioc:'GLI', ble:'TGI', riz:'VARI',
   soja:'GRVI', cafe:'TGI',  coton:'VARI', tomate:'VARI',
-  banane:'GLI', agrumes:'GRVI', autre:'VARI',
+  banane:'GLI', agrumes:'GRVI', arachide:'GLI', courge:'ExG', potager:'VARI', autre:'VARI',
 };
 
 function selectIndex(idx) {
