@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgroVision — EIC Accelerator 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --soil:    #070e08;
+  --dark:    #0d1a0f;
+  --green:   #1e4228;
+  --mid:     #2d6b3e;
+  --leaf:    #4a9c5d;
+  --gold:    #c8a84b;
+  --amber:   #e8b84b;
+  --cream:   #e8dcc8;
+  --white:   #f4ede0;
+  --dim:     rgba(232,220,200,0.45);
+  --gridline:rgba(74,156,93,0.12);
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--soil);
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--cream);
+  overflow: hidden;
+}
+
+/* ── FIELD GRID BACKGROUND ── */
+.field-grid {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(var(--gridline) 1px, transparent 1px),
+    linear-gradient(90deg, var(--gridline) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+}
+.scan-line {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--leaf), transparent);
+  opacity: 0.3;
+  animation: scan 6s linear infinite;
+  z-index: 1;
+  pointer-events: none;
+}
+@keyframes scan { 0% { top: -2px; } 100% { top: 100vh; } }
+
+/* ── SLIDE SYSTEM ── */
+#deck {
+  position: relative; width: 100%; height: 100vh;
+  z-index: 2;
+}
+.slide {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  padding: 5vh 6vw;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s cubic-bezier(.4,0,.2,1), transform 0.6s cubic-bezier(.4,0,.2,1);
+  pointer-events: none;
+}
+.slide.active {
+  opacity: 1; transform: translateY(0);
+  pointer-events: all;
+}
+.slide.out {
+  opacity: 0; transform: translateY(-30px);
+}
+
+/* ── NAV ── */
+#nav {
+  position: fixed; bottom: 3vh; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 12px;
+  z-index: 10;
+}
+.dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--dim); cursor: pointer;
+  transition: background .3s, transform .3s;
+}
+.dot.active { background: var(--gold); transform: scale(1.4); }
+.nav-btn {
+  background: none; border: 1px solid rgba(200,168,75,0.3);
+  color: var(--gold); width: 36px; height: 36px;
+  border-radius: 50%; cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s, border-color .2s;
+}
+.nav-btn:hover { background: rgba(200,168,75,0.1); border-color: var(--gold); }
+
+#slide-counter {
+  position: fixed; top: 3vh; right: 4vw;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; letter-spacing: .15em;
+  color: var(--dim); z-index: 10;
+}
+#pdf-btn {
+  position: fixed; top: 3vh; left: 4vw;
+  background: none; border: 1px solid rgba(200,168,75,0.3);
+  color: var(--gold); padding: 6px 14px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+  letter-spacing: .1em; cursor: pointer; z-index: 10;
+  transition: background .2s;
+}
+#pdf-btn:hover { background: rgba(200,168,75,0.1); }
+
+/* ── LOGO MARK ── */
+.logomark {
+  position: fixed; top: 3vh; left: 50%; transform: translateX(-50%);
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600;
+  letter-spacing: .25em; color: var(--dim);
+  text-transform: uppercase; z-index: 10;
+}
+
+/* ── TYPOGRAPHY ── */
+.label {
+  font-size: 10px; letter-spacing: .3em; text-transform: uppercase;
+  color: var(--leaf); margin-bottom: 1.2rem; font-weight: 400;
+}
+h1 {
+  font-family: 'Syne', sans-serif; font-weight: 800;
+  font-size: clamp(52px, 9vw, 110px);
+  line-height: .95; letter-spacing: -.02em;
+  color: var(--white);
+}
+h2 {
+  font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: clamp(28px, 4.5vw, 56px);
+  line-height: 1.1; color: var(--white);
+}
+h3 {
+  font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: clamp(18px, 2.2vw, 26px);
+  color: var(--cream);
+}
+.sub {
+  font-size: clamp(13px, 1.3vw, 16px); color: var(--dim);
+  line-height: 1.6; font-weight: 300;
+  max-width: 60ch;
+}
+.gold { color: var(--gold); }
+.leaf { color: var(--leaf); }
+
+/* ── STAT CARD ── */
+.stat-grid { display: flex; gap: 2vw; width: 100%; max-width: 900px; }
+.stat {
+  flex: 1; border: 1px solid var(--gridline);
+  background: rgba(30,66,40,0.25);
+  padding: clamp(16px,2vw,28px); position: relative;
+  overflow: hidden;
+}
+.stat::before {
+  content: ''; position: absolute; top: 0; left: 0;
+  width: 3px; height: 100%; background: var(--gold);
+}
+.stat-num {
+  font-family: 'Syne', sans-serif; font-weight: 800;
+  font-size: clamp(28px,4vw,52px);
+  color: var(--amber); line-height: 1;
+}
+.stat-label {
+  font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--dim); margin-top: 6px; line-height: 1.4;
+}
+
+/* ── TABLE ── */
+.data-table { width: 100%; border-collapse: collapse; font-size: clamp(11px,1.1vw,14px); }
+.data-table th {
+  text-align: left; padding: 10px 14px;
+  border-bottom: 1px solid var(--gridline);
+  font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--leaf); font-weight: 400;
+}
+.data-table td {
+  padding: 10px 14px; border-bottom: 1px solid rgba(74,156,93,0.07);
+  color: var(--cream); vertical-align: top;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table .yes { color: var(--leaf); font-weight: 600; }
+.data-table .no  { color: rgba(232,220,200,0.25); }
+.data-table .us  { color: var(--amber); }
+
+/* ── PILLAR CARDS ── */
+.pillars { display: flex; gap: 2vw; width: 100%; max-width: 960px; }
+.pillar {
+  flex: 1; border: 1px solid var(--gridline);
+  background: rgba(30,66,40,0.2);
+  padding: clamp(20px,2.5vw,36px);
+  position: relative; overflow: hidden;
+}
+.pillar-num {
+  font-family: 'Syne', sans-serif; font-weight: 800;
+  font-size: 48px; color: rgba(200,168,75,0.15);
+  position: absolute; top: 12px; right: 16px;
+}
+.pillar h3 { color: var(--white); margin-bottom: 10px; }
+.pillar p  { font-size: 13px; color: var(--dim); line-height: 1.55; font-weight: 300; }
+
+/* ── TIMELINE ── */
+.timeline { width: 100%; max-width: 800px; }
+.tl-item {
+  display: flex; gap: 24px; align-items: flex-start;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--gridline);
+}
+.tl-item:last-child { border-bottom: none; }
+.tl-date {
+  font-size: 11px; letter-spacing: .15em; color: var(--gold);
+  min-width: 100px; padding-top: 3px;
+}
+.tl-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--leaf); margin-top: 5px; flex-shrink: 0;
+}
+.tl-dot.done { background: var(--gold); }
+.tl-text { font-size: 13px; color: var(--cream); line-height: 1.5; font-weight: 300; }
+.tl-text strong { color: var(--white); font-weight: 600; }
+
+/* ── FLOW CHART ── */
+.flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.flow-box {
+  border: 1px solid var(--gridline);
+  background: rgba(30,66,40,0.3);
+  padding: 14px 20px; text-align: center;
+}
+.flow-box .fl-tier {
+  font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--leaf); margin-bottom: 4px;
+}
+.flow-box .fl-price {
+  font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: 20px; color: var(--amber);
+}
+.flow-box .fl-target { font-size: 11px; color: var(--dim); margin-top: 4px; }
+.flow-arrow { color: var(--gold); font-size: 18px; }
+
+/* ── ASK ALLOCATION ── */
+.alloc-list { width: 100%; max-width: 700px; }
+.alloc-item {
+  display: flex; align-items: center; gap: 16px;
+  padding: 11px 0; border-bottom: 1px solid var(--gridline);
+}
+.alloc-item:last-child { border-bottom: none; }
+.alloc-bar-wrap { flex: 1; height: 3px; background: rgba(74,156,93,0.15); }
+.alloc-bar { height: 100%; background: linear-gradient(90deg, var(--gold), var(--amber)); }
+.alloc-label { font-size: 12px; color: var(--dim); min-width: 220px; font-weight: 300; }
+.alloc-amt { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; color: var(--amber); min-width: 70px; text-align: right; }
+
+/* ── CHECK LIST ── */
+.check-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.check-list li { display: flex; gap: 12px; font-size: 13px; color: var(--dim); font-weight: 300; }
+.check-list li::before { content: '✓'; color: var(--leaf); font-weight: 600; }
+.check-list li.pending::before { content: '○'; color: var(--dim); }
+
+/* ── DRONE SVG ── */
+.drone-wrap { position: absolute; right: 6vw; top: 50%; transform: translateY(-50%); opacity: 0.18; }
+
+/* ── SLIDE SPECIFIC ── */
+/* S1 Cover */
+#s1 { align-items: flex-start; }
+#s1 .tag-row { display: flex; gap: 20px; margin-top: 2rem; flex-wrap: wrap; }
+#s1 .tag {
+  font-size: 10px; letter-spacing: .25em; text-transform: uppercase;
+  border: 1px solid rgba(200,168,75,0.3); padding: 5px 12px; color: var(--gold);
+}
+#s1 h1 { margin-bottom: 1rem; }
+#s1 .tagline {
+  font-family: 'Syne', sans-serif; font-size: clamp(16px,2vw,22px);
+  color: var(--cream); font-weight: 400; max-width: 50ch;
+  margin-bottom: 0.5rem; opacity: 0.8;
+}
+.big-url {
+  font-size: 11px; letter-spacing: .15em; color: var(--leaf);
+  border-bottom: 1px solid rgba(74,156,93,0.4);
+  padding-bottom: 2px; display: inline-block;
+}
+.corner-mark {
+  position: absolute; bottom: 3vh; right: 4vw;
+  font-size: 10px; letter-spacing: .2em; color: var(--dim);
+  text-transform: uppercase;
+}
+
+/* S5 Market */
+.market-big {
+  font-family: 'Syne', sans-serif; font-weight: 800;
+  font-size: clamp(60px,10vw,130px);
+  line-height: 1; letter-spacing: -.03em;
+  color: var(--amber);
+}
+.market-row { display: flex; gap: 4vw; align-items: flex-start; width: 100%; max-width: 940px; }
+.market-left { flex: 1; }
+.market-right { flex: 1; }
+
+/* S9 Team */
+.team-grid { display: flex; gap: 2vw; width: 100%; max-width: 860px; }
+.team-card {
+  flex: 1; border: 1px solid var(--gridline);
+  background: rgba(30,66,40,0.2);
+  padding: clamp(20px,2.5vw,32px);
+}
+.team-role {
+  font-size: 10px; letter-spacing: .25em; text-transform: uppercase;
+  color: var(--leaf); margin-bottom: 8px;
+}
+.team-name {
+  font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: clamp(18px,2vw,24px); color: var(--white);
+  margin-bottom: 12px;
+}
+.team-items { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+.team-items li { font-size: 12px; color: var(--dim); padding-left: 14px; position: relative; font-weight: 300; line-height: 1.4; }
+.team-items li::before { content: '—'; position: absolute; left: 0; color: var(--gold); }
+
+.quote-bar {
+  border-left: 3px solid var(--gold); padding-left: 20px;
+  margin-top: 2rem; max-width: 600px;
+}
+.quote-bar p { font-style: italic; font-size: 14px; color: var(--cream); line-height: 1.6; font-weight: 300; }
+
+/* ── PRINT ── */
+@page {
+  size: A4 landscape;
+  margin: 0;
+}
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  html, body {
+    overflow: visible;
+    width: 297mm; height: auto;
+    background: var(--soil) !important;
+  }
+  .field-grid, .scan-line, #nav, #pdf-btn, #slide-counter, .logomark {
+    display: none !important;
+  }
+  #deck {
+    overflow: visible;
+    height: auto;
+    position: relative;
+  }
+  .slide {
+    position: relative !important;
+    opacity: 1 !important;
+    transform: none !important;
+    pointer-events: all !important;
+    display: flex !important;
+    width: 297mm;
+    height: 210mm;
+    min-height: unset;
+    max-height: 210mm;
+    overflow: hidden;
+    page-break-after: always;
+    break-after: page;
+    background: var(--soil) !important;
+    padding: 12mm 16mm;
+  }
+  .slide:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+  /* Réduit légèrement les tailles pour tenir sur A4 landscape */
+  h1 { font-size: 72px !important; }
+  h2 { font-size: 36px !important; }
+  .market-big { font-size: 80px !important; }
+  .stat-num { font-size: 36px !important; }
+  .pillar-num { font-size: 36px !important; }
+  .drone-wrap { right: 10mm !important; }
+}
+
+/* ── MOBILE ── */
+@media (max-width: 700px) {
+  .pillars, .stat-grid, .team-grid, .market-row { flex-direction: column; }
+  .flow { gap: 4px; }
+  .flow-arrow { transform: rotate(90deg); }
+  .drone-wrap { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="field-grid"></div>
+<div class="scan-line"></div>
+
+<div class="logomark">ArtiAirLink · AgroVision</div>
+<div id="slide-counter">01 / 10</div>
+<button id="pdf-btn" onclick="window.print()">⬇ Export PDF</button>
+
+<div id="deck">
+
+  <!-- ═══ SLIDE 1 — COVER ═══ -->
+  <div class="slide active" id="s1">
+    <div class="drone-wrap">
+      <svg width="340" height="340" viewBox="0 0 200 200" fill="none">
+        <circle cx="100" cy="100" r="90" stroke="rgba(74,156,93,0.4)" stroke-width="0.5"/>
+        <circle cx="100" cy="100" r="60" stroke="rgba(74,156,93,0.3)" stroke-width="0.5" stroke-dasharray="4 4"/>
+        <circle cx="100" cy="100" r="30" stroke="rgba(200,168,75,0.5)" stroke-width="0.5"/>
+        <circle cx="100" cy="100" r="6" fill="rgba(200,168,75,0.7)"/>
+        <!-- arms -->
+        <line x1="100" y1="94" x2="100" y2="30" stroke="rgba(74,156,93,0.5)" stroke-width="1.5"/>
+        <line x1="100" y1="106" x2="100" y2="170" stroke="rgba(74,156,93,0.5)" stroke-width="1.5"/>
+        <line x1="94" y1="100" x2="30" y2="100" stroke="rgba(74,156,93,0.5)" stroke-width="1.5"/>
+        <line x1="106" y1="100" x2="170" y2="100" stroke="rgba(74,156,93,0.5)" stroke-width="1.5"/>
+        <!-- rotors -->
+        <ellipse cx="100" cy="24" rx="22" ry="5" stroke="rgba(74,156,93,0.6)" stroke-width="1" fill="rgba(30,66,40,0.4)"/>
+        <ellipse cx="100" cy="176" rx="22" ry="5" stroke="rgba(74,156,93,0.6)" stroke-width="1" fill="rgba(30,66,40,0.4)"/>
+        <ellipse cx="24" cy="100" rx="5" ry="22" stroke="rgba(74,156,93,0.6)" stroke-width="1" fill="rgba(30,66,40,0.4)"/>
+        <ellipse cx="176" cy="100" rx="5" ry="22" stroke="rgba(74,156,93,0.6)" stroke-width="1" fill="rgba(30,66,40,0.4)"/>
+        <!-- scan lines -->
+        <line x1="10" y1="100" x2="190" y2="100" stroke="rgba(200,168,75,0.15)" stroke-width="0.5"/>
+        <line x1="100" y1="10" x2="100" y2="190" stroke="rgba(200,168,75,0.15)" stroke-width="0.5"/>
+      </svg>
+    </div>
+    <div class="label">EIC Accelerator Open · 2026</div>
+    <h1>AGRO<br>VISION</h1>
+    <p class="tagline">AI Crop Health Diagnostics<br>for 33 Million Smallholder Farmers</p>
+    <a class="big-url" href="https://artiairlink.netlify.app" target="_blank">artiairlink.netlify.app</a>
+    <div class="tag-row">
+      <span class="tag">Agritech · AI · Drone</span>
+      <span class="tag">Belgium · DRC · Africa</span>
+      <span class="tag">€1.25M Ask</span>
+    </div>
+    <div class="corner-mark">ArtiAirLink · Équipe Arti · 2026</div>
+  </div>
+
+  <!-- ═══ SLIDE 2 — PROBLEM ═══ -->
+  <div class="slide" id="s2">
+    <div class="label">The Problem</div>
+    <h2 style="margin-bottom:2.5rem; max-width:18ch">Farmers lose crops they could have saved.</h2>
+    <div class="stat-grid">
+      <div class="stat">
+        <div class="stat-num">28M</div>
+        <div class="stat-label">People food insecure<br>in DRC alone</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">€800</div>
+        <div class="stat-label">Per hectare for a lab<br>analysis — takes 2 weeks</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">€80K</div>
+        <div class="stat-label">Cost of a professional<br>agricultural drone</div>
+      </div>
+    </div>
+    <p class="sub" style="margin-top:2rem">
+      60–80% of crop losses in Sub-Saharan Africa come from diseases
+      that could have been treated 3–4 weeks earlier — if farmers
+      could afford to know what was wrong.
+    </p>
+  </div>
+
+  <!-- ═══ SLIDE 3 — SOLUTION ═══ -->
+  <div class="slide" id="s3">
+    <div class="label">The Solution</div>
+    <h2 style="margin-bottom:2.5rem; max-width:24ch">A €150 drone + a free app = 90-second diagnosis, offline.</h2>
+    <div class="pillars">
+      <div class="pillar">
+        <div class="pillar-num">01</div>
+        <h3>Multi-Index RGB Engine</h3>
+        <p>6 vegetation indices (ExG, GRVI, GLI, TGI, VARI + AVI composite) calibrated per crop and growth stage. Runs on device CPU — zero cloud, zero sensor.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-num">02</div>
+        <h3>On-Device AI <span style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:400">— Phase 2</span></h3>
+        <p>MobileNetV3-Large via TensorFlow.js (≤16MB, target ≥85% accuracy), bootstrapped on PlantVillage. Requires a Belgian field-data partnership to adapt the model to local crop varieties — outreach already initiated with HE2B, awaiting response. Scaling this into a full research partnership is part of the EIC funding ask. Today, Phase 1 ships a rule-based diagnostic engine, not a trained classifier.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-num">03</div>
+        <h3>Offline-First PWA</h3>
+        <p>Service worker pre-caches all assets. Works at 2G or zero connectivity. No app store — instant install from browser. Designed for rural DRC.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 4 — PRODUCT ═══ -->
+  <div class="slide" id="s4">
+    <div style="display:flex; gap:5vw; width:100%; max-width:960px; align-items:flex-start">
+      <div style="flex:1">
+        <div class="label">Product · Phase 1 Live</div>
+        <h2 style="margin-bottom:1.5rem">Live.<br>Today.</h2>
+        <a class="big-url" href="https://artiairlink.netlify.app" target="_blank" style="font-size:13px">artiairlink.netlify.app</a>
+        <p class="sub" style="margin-top:1.5rem; font-size:12px">Built in 3 months, zero external funding.</p>
+        <ul class="check-list" style="margin-top:1.5rem">
+          <li>PWA installable on any Android</li>
+          <li>11 crops · 3 severity levels</li>
+          <li>7-screen mobile UX (Mission → Report)</li>
+          <li>VARI crop-aware engine (Gitelson 2002)</li>
+          <li>Offline service worker v3</li>
+          <li class="pending">Multi-index RGB (Phase 2 — May 2026)</li>
+          <li class="pending">TF.js AI disease detection (Phase 2)</li>
+          <li class="pending">Leaflet.js mapping + PDF export (Phase 2)</li>
+        </ul>
+      </div>
+      <div style="flex:1; display:flex; flex-direction:column; gap:10px">
+        <!-- Mock app screens -->
+        <div style="border:1px solid var(--gridline); background:rgba(30,66,40,0.25); padding:14px; position:relative">
+          <div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--leaf);margin-bottom:8px">Analysis Screen</div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--amber)">VARI 0.74</div>
+              <div style="font-size:10px;color:var(--dim);margin-top:2px">Maize · Flowering stage</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:10px;letter-spacing:.1em;color:var(--leaf);background:rgba(74,156,93,0.15);padding:4px 10px">HEALTHY</div>
+            </div>
+          </div>
+          <div style="margin-top:10px;height:4px;background:rgba(74,156,93,0.1);border-radius:2px">
+            <div style="width:74%;height:100%;background:linear-gradient(90deg,var(--mid),var(--leaf));border-radius:2px"></div>
+          </div>
+        </div>
+        <div style="border:1px solid var(--gridline); background:rgba(30,66,40,0.2); padding:14px">
+          <div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--leaf);margin-bottom:8px">Mission Screen</div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--dim)">Field</span><span>Bandundu Nord — 2.3 ha</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--dim)">Crop</span><span>Cassava</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--dim)">Drone</span><span style="color:var(--leaf)">Parrot Bebop 2 · Connected</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--dim)">Mode</span><span style="color:var(--amber)">OFFLINE · RDC</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 5 — MARKET ═══ -->
+  <div class="slide" id="s5">
+    <div class="market-row">
+      <div class="market-left">
+        <div class="label">Market Opportunity</div>
+        <div class="market-big">$23.8B</div>
+        <div style="font-family:'Syne',sans-serif;font-size:15px;color:var(--dim);margin-top:4px;margin-bottom:2rem">Ag drone market by 2032 · CAGR 21.6%</div>
+        <p class="sub" style="font-size:13px">
+          We enter from the <span class="gold">bottom</span> — 33 million
+          smallholder farms that no competitor is serving,
+          because they're optimizing for €80K drones
+          sold to European cooperatives.
+        </p>
+      </div>
+      <div class="market-right">
+        <table class="data-table" style="font-size:12px">
+          <thead>
+            <tr><th>Market</th><th>Size</th><th>Our edge</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>DRC smallholders</strong><br><span style="font-size:10px;color:var(--dim)">4.2M farms, 2ha avg</span></td>
+              <td class="us">€5–17M/yr<br><span style="font-size:10px;color:var(--dim)">at 1% penetration</span></td>
+              <td style="color:var(--leaf);font-size:11px">Only offline solution</td>
+            </tr>
+            <tr>
+              <td><strong>Sub-Saharan Africa</strong><br><span style="font-size:10px;color:var(--dim)">33M farms total</span></td>
+              <td class="us">$1.2B TAM</td>
+              <td style="color:var(--leaf);font-size:11px">French + local langs</td>
+            </tr>
+            <tr>
+              <td><strong>Belgium / EU</strong><br><span style="font-size:10px;color:var(--dim)">CAP compliance</span></td>
+              <td class="us">€4.1B market</td>
+              <td style="color:var(--leaf);font-size:11px">-50% pesticide mandate</td>
+            </tr>
+            <tr>
+              <td><strong>B2G contracts</strong><br><span style="font-size:10px;color:var(--dim)">Gov ag monitoring</span></td>
+              <td class="us">€299K+/deal</td>
+              <td style="color:var(--leaf);font-size:11px">Proven platform</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 6 — TRACTION ═══ -->
+  <div class="slide" id="s6">
+    <div class="label">Traction</div>
+    <h2 style="margin-bottom:0.5rem">Built in 3 months.<br>Zero external funding.</h2>
+    <p class="sub" style="margin-bottom:2rem; font-size:13px">We don't pitch ideas. We ship products.</p>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-date">JAN 2026</div>
+        <div class="tl-dot done"></div>
+        <div class="tl-text"><strong>Research & architecture</strong> — scientific study, stack decisions, Parrot Bebop 2 selected</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-date">MAR 2026</div>
+        <div class="tl-dot done"></div>
+        <div class="tl-text"><strong>VARI engine + 7-screen PWA</strong> — 11 crops, disease detection, offline service worker v3</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-date">APR 2026</div>
+        <div class="tl-dot done"></div>
+        <div class="tl-text"><strong>Phase 1 deployed</strong> — artiairlink.netlify.app live, business plan, investor pitch, logo</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-date">MAY 2026</div>
+        <div class="tl-dot done"></div>
+        <div class="tl-text"><strong>Phase 2A/2C shipped</strong> — multi-indices ExG/GRVI/GLI/TGI, Leaflet.js mapping + prescription maps</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-date">TARGET Q3 2026</div>
+        <div class="tl-dot"></div>
+        <div class="tl-text"><strong>Phase 2B</strong> — AI disease classifier (TF.js/MobileNetV3), pending Belgian field-data partnership; PDF export</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-date">Q4 2026</div>
+        <div class="tl-dot"></div>
+        <div class="tl-text"><strong>Field pilots</strong> — 500 farmers, 3 DRC provinces + 5 Belgian farms (CAP compliance)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 7 — BUSINESS MODEL ═══ -->
+  <div class="slide" id="s7">
+    <div class="label">Business Model</div>
+    <h2 style="margin-bottom:2rem">4 revenue streams.<br>Path to <span class="gold">€1M ARR.</span></h2>
+    <div class="flow">
+      <div class="flow-box">
+        <div class="fl-tier">Free</div>
+        <div class="fl-price">€0</div>
+        <div class="fl-target">All farmers<br>Acquisition</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">
+        <div class="fl-tier">Pro</div>
+        <div class="fl-price">$4.99<span style="font-size:12px;color:var(--dim)">/mo</span></div>
+        <div class="fl-target">Smallholders<br>DRC / Africa</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="border-color:rgba(200,168,75,0.4)">
+        <div class="fl-tier" style="color:var(--gold)">Enterprise</div>
+        <div class="fl-price">€299<span style="font-size:12px;color:var(--dim)">/mo</span></div>
+        <div class="fl-target">Agro firms<br>Cooperatives</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">
+        <div class="fl-tier">B2G</div>
+        <div class="fl-price">Contract</div>
+        <div class="fl-target">Gov agencies<br>NGO programs</div>
+      </div>
+    </div>
+    <div style="margin-top:2rem; display:flex; gap:4vw; flex-wrap:wrap; justify-content:center">
+      <div style="text-align:center">
+        <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--amber)">200</div>
+        <div style="font-size:10px;letter-spacing:.15em;color:var(--dim);text-transform:uppercase">Enterprise clients<br>= €1M ARR</div>
+      </div>
+      <div style="width:1px;background:var(--gridline)"></div>
+      <div style="text-align:center">
+        <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--amber)">17K</div>
+        <div style="font-size:10px;letter-spacing:.15em;color:var(--dim);text-transform:uppercase">Pro farmers<br>= €1M ARR</div>
+      </div>
+      <div style="width:1px;background:var(--gridline)"></div>
+      <div style="text-align:center">
+        <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--amber)">€5</div>
+        <div style="font-size:10px;letter-spacing:.15em;color:var(--dim);text-transform:uppercase">Cost/ha<br>vs €800 lab</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 8 — COMPETITION ═══ -->
+  <div class="slide" id="s8">
+    <div class="label">Competitive Advantage</div>
+    <h2 style="margin-bottom:2rem; max-width:22ch">No one serves the $130 phone, offline, in francophone Africa.</h2>
+    <table class="data-table" style="max-width:800px;width:100%">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th style="color:var(--amber)">AgroVision</th>
+          <th>Trimble AG</th>
+          <th>John Deere</th>
+          <th>Planet / Copernicus</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Cost / ha analysis</td>
+          <td class="us">&lt; €5</td>
+          <td>€200+</td>
+          <td>€300+</td>
+          <td>€50+</td>
+        </tr>
+        <tr>
+          <td>Full offline mode</td>
+          <td class="yes">✓</td>
+          <td class="no">✗</td>
+          <td class="no">✗</td>
+          <td class="no">✗</td>
+        </tr>
+        <tr>
+          <td>$130 Android phone</td>
+          <td class="yes">✓</td>
+          <td class="no">✗</td>
+          <td class="no">✗</td>
+          <td class="no">✗</td>
+        </tr>
+        <tr>
+          <td>No special sensor needed</td>
+          <td class="yes">✓</td>
+          <td class="no">✗</td>
+          <td class="no">✗</td>
+          <td class="no">✗</td>
+        </tr>
+        <tr>
+          <td>French + African languages</td>
+          <td class="yes">✓ (planned)</td>
+          <td class="no">✗</td>
+          <td class="no">✗</td>
+          <td class="no">✗</td>
+        </tr>
+        <tr>
+          <td>On-device AI (data sovereignty)</td>
+          <td class="yes">✓ (planned)</td>
+          <td class="no">✗</td>
+          <td class="no">✗</td>
+          <td class="no">✗</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══ SLIDE 9 — TEAM ═══ -->
+  <div class="slide" id="s9">
+    <div class="label">The Team</div>
+    <h2 style="margin-bottom:2rem">We didn't raise money<br>to build a deck.</h2>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-role">Tech & Innovation</div>
+        <div class="team-name">Équipe Arti</div>
+        <ul class="team-items">
+          <li>Full-stack development: HTML5/JS/Canvas/PWA/TF.js</li>
+          <li>Offline-first architecture expertise</li>
+          <li>Agricultural research (AGROVISION_RESEARCH_STUDY)</li>
+          <li>Belgium · DRC diaspora connection</li>
+          <li>Phase 1 shipped in 3 months, zero external funding</li>
+          <li>Howard Nyokas — M1 Génie Industriel (Mécanique & Aéronautique), HE2B — leading academic outreach on plant-disease visual criteria</li>
+        </ul>
+      </div>
+      <div class="team-card">
+        <div class="team-role">Operations · Field</div>
+        <div class="team-name">Arti Team</div>
+        <ul class="team-items">
+          <li>Drone operations Belgium & DRC</li>
+          <li>Agricultural field expertise</li>
+          <li>Network in DRC farming communities</li>
+          <li>Section Drone & Innovation</li>
+        </ul>
+      </div>
+      <div class="team-card" style="border-color:rgba(200,168,75,0.2)">
+        <div class="team-role" style="color:var(--gold)">Hiring · EIC-funded</div>
+        <div class="team-name" style="color:var(--dim)">Advisors Needed</div>
+        <ul class="team-items">
+          <li>ML Engineer (TF.js optimization)</li>
+          <li>Africa Business Development</li>
+          <li>Agronomist (DRC field validation)</li>
+          <li>Legal / IP (patent, GDPR)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="quote-bar">
+      <p>"We are not asking for the money to build it. We are asking for the money to scale what already works."</p>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 10 — ASK ═══ -->
+  <div class="slide" id="s10">
+    <div style="display:flex;gap:5vw;width:100%;max-width:960px;align-items:flex-start">
+      <div style="flex:1">
+        <div class="label">The Ask</div>
+        <h2 style="margin-bottom:0.3rem">€1.25M</h2>
+        <p style="font-family:'Syne',sans-serif;font-size:16px;color:var(--dim);margin-bottom:2rem">to go from 1 deployed app<br>to 1,000 active farms.</p>
+        <div class="alloc-list">
+          <div class="alloc-item">
+            <div class="alloc-label">AI validation + Field pilots</div>
+            <div class="alloc-bar-wrap"><div class="alloc-bar" style="width:44%"></div></div>
+            <div class="alloc-amt">€550K</div>
+          </div>
+          <div class="alloc-item">
+            <div class="alloc-label">Team expansion</div>
+            <div class="alloc-bar-wrap"><div class="alloc-bar" style="width:32%"></div></div>
+            <div class="alloc-amt">€400K</div>
+          </div>
+          <div class="alloc-item">
+            <div class="alloc-label">Infrastructure + Security</div>
+            <div class="alloc-bar-wrap"><div class="alloc-bar" style="width:10%"></div></div>
+            <div class="alloc-amt">€100K</div>
+          </div>
+          <div class="alloc-item">
+            <div class="alloc-label">Legal / IP / Certification</div>
+            <div class="alloc-bar-wrap"><div class="alloc-bar" style="width:10%"></div></div>
+            <div class="alloc-amt">€100K</div>
+          </div>
+          <div class="alloc-item">
+            <div class="alloc-label">Contingency</div>
+            <div class="alloc-bar-wrap"><div class="alloc-bar" style="width:4%"></div></div>
+            <div class="alloc-amt">€100K</div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1">
+        <div class="label" style="margin-bottom:1rem">12-Month Milestones</div>
+        <ul class="check-list" style="gap:14px">
+          <li class="pending">M3 — Phase 2 shipped · AI ≥85% accuracy</li>
+          <li class="pending">M6 — 100 farmers onboarded · DRC pilots</li>
+          <li class="pending">M9 — Belgian CAP compliance certified</li>
+          <li class="pending">M12 — 1,000 active farms · €50K MRR</li>
+          <li class="pending">M12 — Series A preparation</li>
+        </ul>
+        <div style="margin-top:2rem;border:1px solid rgba(200,168,75,0.25);padding:20px">
+          <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--leaf);margin-bottom:10px">Contact</div>
+          <div style="font-family:'Syne',sans-serif;font-size:16px;color:var(--white);margin-bottom:4px">ArtiAirLink — Équipe Arti</div>
+          <div style="font-size:12px;color:var(--dim)">contact@artiairlink.com</div>
+          <div style="font-size:12px;color:var(--leaf);margin-top:4px">artiairlink.netlify.app</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- ── NAV ── -->
+<div id="nav">
+  <button class="nav-btn" id="prev">←</button>
+  <div id="dots"></div>
+  <button class="nav-btn" id="next">→</button>
+</div>
+
+<script>
+const slides = Array.from(document.querySelectorAll('.slide'));
+const total  = slides.length;
+let   cur    = 0;
+
+const dotsEl    = document.getElementById('dots');
+const counterEl = document.getElementById('slide-counter');
+
+// Build dots
+slides.forEach((_, i) => {
+  const d = document.createElement('div');
+  d.className = 'dot' + (i === 0 ? ' active' : '');
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+
+function go(n) {
+  slides[cur].classList.remove('active');
+  slides[cur].classList.add('out');
+  setTimeout(() => slides[cur < n ? cur : cur].classList.remove('out'), 600);
+
+  const prev = cur;
+  cur = n;
+  slides[cur].classList.add('active');
+  setTimeout(() => slides[prev].classList.remove('out'), 600);
+
+  dotsEl.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === cur));
+  counterEl.textContent = String(cur + 1).padStart(2,'0') + ' / ' + String(total).padStart(2,'0');
+}
+
+document.getElementById('next').onclick = () => cur < total-1 && go(cur+1);
+document.getElementById('prev').onclick = () => cur > 0       && go(cur-1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown')  { cur < total-1 && go(cur+1); }
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')    { cur > 0       && go(cur-1); }
+});
+
+// Touch / swipe
+let tx = 0;
+document.addEventListener('touchstart', e => tx = e.touches[0].clientX);
+document.addEventListener('touchend',   e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (dx < -50 && cur < total-1) go(cur+1);
+  if (dx >  50 && cur > 0)       go(cur-1);
+});
+</script>
+</body>
+</html>
