@@ -298,8 +298,9 @@ textarea{min-height:80px;resize:vertical}
 .gps-row .field{flex:1;margin:0}
 .gps-row button{flex-shrink:0;padding:11px 14px;font-size:12px}
 </style>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="./assets/leaflet/leaflet.css"/>
+<script src="./assets/leaflet/leaflet.js"></script>
+<script src="./assets/tfjs/tf.min.js"></script>
 </head>
 <body>
 <div class="app">
@@ -482,6 +483,16 @@ textarea{min-height:80px;resize:vertical}
       <span class="chip" id="hbStress">Stress : —</span>
       <span class="chip" id="hbConf">Confiance : —</span>
     </div>
+  </div>
+
+  <!-- DIAGNOSTIC IA (maladies) -->
+  <div class="card" style="padding:14px;margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="section-title" style="margin:0;font-size:13px">🔬 Diagnostic IA · maladies</div>
+      <span style="font-size:10px;color:var(--G3);font-weight:800;letter-spacing:.06em">TF.js · offline</span>
+    </div>
+    <button class="bg" id="aiBtn" onclick="runDiseaseAI()" style="width:100%">Lancer le diagnostic IA</button>
+    <div id="aiResult" style="margin-top:10px;display:none;font-size:13px;line-height:1.5"></div>
   </div>
 
   <div class="grid g2" style="margin-bottom:12px">
@@ -719,6 +730,11 @@ const LS = {
   get: (k, d) => { try { const v = localStorage.getItem(k); return v !== null ? JSON.parse(v) : d; } catch { return d; } },
   set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
 };
+
+// Échappement HTML — obligatoire avant d'insérer toute valeur saisie par l'utilisateur (titre mission, site, opérateur, notes...) dans innerHTML
+function esc(v) {
+  return String(v ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
 
 // ═══════════════════════════════════════
 // COLOUR SCIENCE
@@ -1063,6 +1079,73 @@ function computeMetrics(r, g, b, cropKey) {
 }
 
 // ═══════════════════════════════════════
+// IA — DIAGNOSTIC MALADIES (TensorFlow.js, offline)
+// ═══════════════════════════════════════
+// Un modèle par culture, auto-hébergé sous models/<cropKey>/ (model.json + shards + labels.json).
+// Tant qu'aucun modèle n'est présent pour une culture, le bouton reste utilisable : il informe
+// l'opérateur et laisse l'analyse par indice (VARI/ExG/GRVI/GLI/TGI) comme seule source de vérité.
+// Voir docs/IA_SETUP.md pour la procédure d'entraînement/conversion (Google Colab).
+const AI_MODELS = {
+  // manioc: { path: './models/manioc/model.json', labels: './models/manioc/labels.json', inputSize: 224 },
+};
+const _aiCache = {};
+
+async function loadAIModel(cropKey) {
+  if (_aiCache[cropKey]) return _aiCache[cropKey];
+  const def = AI_MODELS[cropKey];
+  if (!def) return null;
+  const [model, labels] = await Promise.all([
+    tf.loadGraphModel(def.path),
+    fetch(def.labels).then(r => r.json()),
+  ]);
+  const entry = { model, labels, inputSize: def.inputSize };
+  _aiCache[cropKey] = entry;
+  return entry;
+}
+
+async function runDiseaseAI() {
+  const cropKey = S.activeMission?.cropKey || 'autre';
+  const crop = cropFromKey(cropKey);
+  const resEl = document.getElementById('aiResult');
+  const btn = document.getElementById('aiBtn');
+  resEl.style.display = 'block';
+
+  if (!AI_MODELS[cropKey]) {
+    resEl.innerHTML = `<p class="muted">Aucun modèle IA entraîné pour ${esc(crop.emoji + ' ' + crop.name)} pour l'instant — l'analyse par indice ci-dessus reste la référence.</p>`;
+    return;
+  }
+  if (!drawFrame()) { toast('Aucune source active', true); return; }
+
+  btn.disabled = true; btn.textContent = 'Analyse en cours…';
+  try {
+    const { model, labels, inputSize } = await loadAIModel(cropKey);
+    const pred = tf.tidy(() => {
+      const input = tf.browser.fromPixels(cv)
+        .resizeBilinear([inputSize, inputSize])
+        .toFloat().div(255)
+        .expandDims(0);
+      return model.predict(input);
+    });
+    const data = await pred.data();
+    pred.dispose();
+
+    const ranked = Array.from(data)
+      .map((p, i) => ({ label: labels[i] || ('Classe ' + i), p }))
+      .sort((a, b) => b.p - a.p)
+      .slice(0, 3);
+
+    resEl.innerHTML = `
+      <div style="font-weight:800;color:var(--G1)">${esc(ranked[0].label)} — ${(ranked[0].p * 100).toFixed(1)}%</div>
+      ${ranked.slice(1).map(r => `<div class="muted">${esc(r.label)} — ${(r.p * 100).toFixed(1)}%</div>`).join('')}
+    `;
+  } catch (e) {
+    resEl.innerHTML = `<p class="muted">Diagnostic IA indisponible (${esc(e.message)}) — analyse par indice utilisée à la place.</p>`;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Lancer le diagnostic IA';
+  }
+}
+
+// ═══════════════════════════════════════
 // CAMERA & VIDEO
 // ═══════════════════════════════════════
 const lv = document.getElementById('lv');
@@ -1099,8 +1182,8 @@ function renderCamList() {
   el.innerHTML = S.cameras.map((c, i) => {
     const name = c.label || 'Caméra ' + (i + 1);
     const isSel = S.selectedDeviceId === c.deviceId;
-    return `<div class="cam-tile ${isSel ? 'sel' : ''}" onclick="selectCam('${c.deviceId}')">
-      <div class="cn">${name}</div>
+    return `<div class="cam-tile ${isSel ? 'sel' : ''}" onclick="selectCam('${esc(c.deviceId)}')">
+      <div class="cn">${esc(name)}</div>
       <div class="cm">Caméra système détectée</div>
     </div>`;
   }).join('');
@@ -1666,11 +1749,11 @@ async function refreshMissionList() {
   const el = document.getElementById('missionListEl');
   if (!missions.length) { el.innerHTML = '<p class="muted" style="padding:0 2px">Aucune mission. Créez-en une ci-dessus.</p>'; return; }
   el.innerHTML = missions.map(m => `
-    <div class="mission-item" onclick="setActiveMission('${m.id}')">
+    <div class="mission-item" onclick="setActiveMission('${esc(m.id)}')">
       <div class="mi-icon">${m.type==='mapping'?'🗺️':'🔬'}</div>
       <div class="mi-body">
-        <div class="mi-name">${m.title}</div>
-        <div class="mi-meta">${m.cropType} · ${m.siteName} · ${new Date(m.createdAt).toLocaleDateString('fr-BE')}</div>
+        <div class="mi-name">${esc(m.title)}</div>
+        <div class="mi-meta">${esc(m.cropType)} · ${esc(m.siteName)} · ${new Date(m.createdAt).toLocaleDateString('fr-BE')}</div>
       </div>
       ${S.activeMission?.id===m.id ? '<div class="mi-active-badge">Active</div>' : ''}
     </div>
@@ -1714,10 +1797,10 @@ async function loadHistory() {
   if (!caps.length) { el.innerHTML = '<p class="muted" style="padding:0 16px">Aucune capture sauvegardée.</p>'; return; }
   el.innerHTML = caps.slice(0, 50).map(c => `
     <div class="hist-item">
-      <div class="hist-swatch" style="background:${c.hex}"></div>
+      <div class="hist-swatch" style="background:${esc(c.hex)}"></div>
       <div class="hist-body">
-        <div class="hist-name">${c.colorName.split('/')[0].trim()}</div>
-        <div class="hist-meta">${c.healthLabel} · Stress ${c.stress}${c.missionTitle ? ' · ' + c.missionTitle.slice(0,14) : ''}</div>
+        <div class="hist-name">${esc(c.colorName.split('/')[0].trim())}</div>
+        <div class="hist-meta">${esc(c.healthLabel)} · Stress ${esc(c.stress)}${c.missionTitle ? ' · ' + esc(c.missionTitle.slice(0,14)) : ''}</div>
       </div>
       <div class="hist-right">
         <div class="hist-ndvi">NDVI ${c.ndvi}</div>
@@ -1733,10 +1816,10 @@ function renderReportHistory() {
   if (!caps.length) { el.innerHTML = '<p class="muted">Aucune capture cette session.</p>'; return; }
   el.innerHTML = caps.map(c => `
     <div class="hist-item">
-      <div class="hist-swatch" style="background:${c.hex}"></div>
+      <div class="hist-swatch" style="background:${esc(c.hex)}"></div>
       <div class="hist-body">
-        <div class="hist-name">${c.colorName.split('/')[0].trim()}</div>
-        <div class="hist-meta">${c.healthLabel} · NDVI ${c.ndvi}</div>
+        <div class="hist-name">${esc(c.colorName.split('/')[0].trim())}</div>
+        <div class="hist-meta">${esc(c.healthLabel)} · NDVI ${c.ndvi}</div>
       </div>
       <div class="hist-right">
         <div class="hist-ndvi">${c.healthScore}%</div>

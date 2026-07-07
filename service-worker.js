@@ -1,16 +1,26 @@
 // AgroVision — Service Worker
 // Stratégie : network-first (mises à jour toujours visibles), fallback cache hors ligne
 
-const CACHE = 'agrovision-v3';
+const CACHE = 'agrovision-v4';
 const ASSETS = [
   './app.html',
-  './manifest.json'
+  './manifest.json',
+  './assets/leaflet/leaflet.js',
+  './assets/leaflet/leaflet.css',
+  './assets/leaflet/images/marker-icon.png',
+  './assets/leaflet/images/marker-icon-2x.png',
+  './assets/leaflet/images/marker-shadow.png',
+  './assets/leaflet/images/layers.png',
+  './assets/leaflet/images/layers-2x.png',
+  './assets/tfjs/tf.min.js'
 ];
 
 // Installation : mise en cache des assets essentiels
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS))
+    caches.open(CACHE).then(c =>
+      Promise.all(ASSETS.map(a => c.add(a).catch(() => {})))
+    )
   );
   self.skipWaiting();
 });
