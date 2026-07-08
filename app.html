@@ -1578,10 +1578,20 @@ const MAPTILER_KEY = '4bM0Ae0zetAvFiXe0quG';
 
 function initLeafletMap() {
   _lfMap = L.map('leafletMap', { zoomControl: true, attributionControl: false });
-  L.tileLayer(`https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=${MAPTILER_KEY}`, {
+  const tiles = L.tileLayer(`https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=${MAPTILER_KEY}`, {
     maxZoom: 22, opacity: 0.95, tileSize: 512, zoomOffset: -1,
     attribution: '© MapTiler © OpenStreetMap contributors'
   }).addTo(_lfMap);
+  // Diagnostic temporaire — à retirer une fois le fond de carte confirmé fonctionnel
+  let _tileErrShown = false, _tileOkShown = false;
+  tiles.on('tileerror', (e) => {
+    if (_tileErrShown) return; _tileErrShown = true;
+    toast('🔴 Tuile carte échouée : ' + (e?.tile?.src || 'URL inconnue'), true);
+  });
+  tiles.on('tileload', () => {
+    if (_tileOkShown) return; _tileOkShown = true;
+    toast('🟢 Tuile carte chargée avec succès');
+  });
   L.control.attribution({ prefix: '© <a href="https://www.maptiler.com">MapTiler</a> © <a href="https://openstreetmap.org">OSM</a>' }).addTo(_lfMap);
   const c = S.mapCenter;
   _lfMap.setView(c ? [c.lat, c.lon] : [0, 0], c ? 17 : 2);
