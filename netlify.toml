@@ -1,5 +1,11 @@
 [build]
   publish = "."
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/tiles/:z/:x/:y"
+  to = "/.netlify/functions/tile?z=:z&x=:x&y=:y"
+  status = 200
 
 [[redirects]]
   from = "/*"

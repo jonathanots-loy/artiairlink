@@ -1570,15 +1570,16 @@ function toggleMapView(view) {
   }
 }
 
-// Clé MapTiler côté client — normal pour ce type de service (le quota est protégé en
-// restreignant les domaines autorisés dans le dashboard MapTiler, pas en cachant la clé).
-// tile.openstreetmap.org interdit l'usage par une app distribuée (politique d'usage OSM) :
-// leurs serveurs renvoyaient un tile "Access denied" à la place de la carte réelle.
-const MAPTILER_KEY = '4bM0Ae0zetAvFiXe0quG';
-
+// Les tuiles passent par /tiles/{z}/{x}/{y} (netlify/functions/tile.js), qui relaie
+// vers MapTiler côté serveur. Pourquoi : tile.openstreetmap.org interdit l'usage par
+// une app distribuée (politique d'usage OSM), et appeler api.maptiler.com directement
+// depuis le navigateur se fait bloquer par les protections anti-tracking (Safari
+// "Empêcher le suivi intersite" traite le cookie anti-bot Cloudflare de MapTiler comme
+// un traceur tiers). Passer par notre propre domaine règle les deux problèmes, et garde
+// la clé API côté serveur (variable d'env MAPTILER_KEY sur Netlify) au lieu de l'exposer.
 function initLeafletMap() {
   _lfMap = L.map('leafletMap', { zoomControl: true, attributionControl: false });
-  const tiles = L.tileLayer(`https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=${MAPTILER_KEY}`, {
+  const tiles = L.tileLayer('./tiles/{z}/{x}/{y}', {
     maxZoom: 22, opacity: 0.95, tileSize: 512, zoomOffset: -1,
     attribution: '© MapTiler © OpenStreetMap contributors'
   }).addTo(_lfMap);
