@@ -1484,8 +1484,10 @@ function computeGPSPos(idx, center, alt, overlapPct) {
   const col = idx % COLS;
   const row = Math.floor(idx / COLS);
   const colPos = row % 2 === 0 ? col : (COLS - 1 - col); // lawnmower alternation
-  // footprint width (m) = GSD (m/px) × image width (px) ; GSD ≈ alt × 0.007 m/px for typical drone
-  const footprintM = alt * 28;
+  // footprint width (m) = GSD (m/px) × image width (px), pour une caméra type Parrot
+  // Bebop 2 (capteur ~6.17mm, focale ~4mm, image ~4608px) : GSD ≈ alt × 0.0033 m/px,
+  // donc footprint ≈ alt × 1.5 (ex: ~45m à 30m d'altitude, pas ~840m)
+  const footprintM = alt * 1.5;
   const strip = footprintM * (1 - overlapPct / 100) || 5;
   const dx = (colPos - 2) * strip; // E/W offset in meters from center (col 2 = center)
   const dy = -row * strip;          // N/S offset (negative = south)
