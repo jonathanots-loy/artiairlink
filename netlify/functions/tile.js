@@ -8,10 +8,14 @@
 // elle n'apparaît plus jamais dans le code envoyé au navigateur.
 
 exports.handler = async (event) => {
-  const { z, x, y } = event.queryStringParameters || {};
-  if (!/^[0-9]{1,2}$/.test(z) || !/^[0-9]{1,7}$/.test(x) || !/^[0-9]{1,7}$/.test(y)) {
-    return { statusCode: 400, body: 'Invalid tile coordinates' };
+  // event.path est le chemin original demandé par le navigateur (/tiles/16/33510/21975),
+  // pas celui de la fonction — plus fiable que de faire transiter z/x/y par des
+  // placeholders de redirection Netlify, qui n'arrivaient pas correctement en query string.
+  const m = event.path.match(/(\d{1,2})\/(\d{1,7})\/(\d{1,7})\/?$/);
+  if (!m) {
+    return { statusCode: 400, body: 'Invalid tile coordinates: ' + event.path };
   }
+  const [, z, x, y] = m;
 
   const key = process.env.MAPTILER_KEY;
   if (!key) {
