@@ -1683,6 +1683,9 @@ function renderLeafletMap() {
     [Math.min(...allLats) - halfDeg * 2, Math.min(...allLons) - halfDeg * 2],
     [Math.max(...allLats) + halfDeg * 2, Math.max(...allLons) + halfDeg * 2]
   ]);
+  // fitBounds peut choisir un zoom trop large sur une zone très petite (un seul champ) —
+  // on force un zoom minimum pour que les points/le dégradé restent lisibles séparément.
+  if (_lfMap.getZoom() < 19) _lfMap.setZoom(19);
   _lfMap.invalidateSize();
 }
 
