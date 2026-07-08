@@ -1570,13 +1570,19 @@ function toggleMapView(view) {
   }
 }
 
+// Clé MapTiler côté client — normal pour ce type de service (le quota est protégé en
+// restreignant les domaines autorisés dans le dashboard MapTiler, pas en cachant la clé).
+// tile.openstreetmap.org interdit l'usage par une app distribuée (politique d'usage OSM) :
+// leurs serveurs renvoyaient un tile "Access denied" à la place de la carte réelle.
+const MAPTILER_KEY = '4bM0Ae0zetAvFiXe0quG';
+
 function initLeafletMap() {
   _lfMap = L.map('leafletMap', { zoomControl: true, attributionControl: false });
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 22, opacity: 0.85,
-    attribution: '© OpenStreetMap'
+  L.tileLayer(`https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=${MAPTILER_KEY}`, {
+    maxZoom: 22, opacity: 0.95, tileSize: 512, zoomOffset: -1,
+    attribution: '© MapTiler © OpenStreetMap contributors'
   }).addTo(_lfMap);
-  L.control.attribution({ prefix: '© <a href="https://openstreetmap.org">OSM</a>' }).addTo(_lfMap);
+  L.control.attribution({ prefix: '© <a href="https://www.maptiler.com">MapTiler</a> © <a href="https://openstreetmap.org">OSM</a>' }).addTo(_lfMap);
   const c = S.mapCenter;
   _lfMap.setView(c ? [c.lat, c.lon] : [0, 0], c ? 17 : 2);
 }
